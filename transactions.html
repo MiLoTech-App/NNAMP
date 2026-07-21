@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NNAMP - Transactions</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body{ padding-bottom: 80px; background:#f7f9fc; }
+        .filter-btn.active{ background:#0d6e2f !important; color:white !important; }
+        .filter-btn{ background:#e8f5e9; color:#333; border:none; padding:6px 10px; border-radius:20px; cursor:pointer; font-size:11px; font-weight:500; white-space: nowrap; }
+        .filter-wrapper{ display:flex; gap:8px; margin-bottom:20px; overflow-x:auto; padding-bottom:5px; }
+        .filter-wrapper::-webkit-scrollbar{ display:none; }
+        .card{ overflow: hidden; }
+        .table-wrapper{ width:100%; overflow-x: auto; }
+        table{ width:100%; min-width: 550px; border-collapse: collapse; }
+        th, td{ padding:10px 6px; text-align:left; border-bottom:1px solid #eee; font-size:11px; white-space: nowrap; }
+        th{ background:#f7f9fc; color:#0d6e2f; font-weight:600; }
+        .menu-toggle { background: #0d6e2f !important; color: white !important; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px !important; border: none; }
+        .close-sidebar { background: #0d6e2f !important; color: white !important; width: 40px; height: 40px; border-radius: 10px; font-size: 22px !important; font-weight: bold; border: none; position: absolute; top: 15px; right: 15px; }
+        .status-pending{color:#ffc107;font-weight:bold;}
+        .status-approved{color:#198754;font-weight:bold;}
+        .status-rejected{color:#dc3545;font-weight:bold;}
+    </style>
+</head>
+<body>
+<div class="dashboard-layout">
+    <aside class="sidebar">
+        <button class="close-sidebar" onclick="toggleSidebar()">✕</button>
+        <div class="logo">NNAMP🌱🇳🇬<span>.</span><p>Grow - Invest - Prosper</p></div>
+        <nav>
+            <a href="dashboard.html">🏠 Dashboard</a>
+            <a href="investments.html">📊 Investments</a>
+            <a href="savings.html">💰 Savings</a>
+            <a href="deposit.html">⬇️ Deposit</a>
+            <a href="withdraw.html">⬆️ Withdraw</a>
+            <a href="transactions.html" class="active">📄 Transactions</a>
+            <a href="referrals.html">👥 Referrals</a>
+            <a href="daily-bonus.html">🎁 Daily Bonus</a>
+            <a href="profile.html">👤 Profile</a>
+            <a href="settings.html">⚙️ Settings</a>
+            <a href="support.html">🎧 Support Center</a>
+            <a href="login.html" onclick="localStorage.removeItem('nnampCurrentUser')" style="color:#dc3545;">🚪 Logout</a>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <header style="display:flex; justify-content:space-between; align-items:center; padding:15px 0;">
+            <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+            <h2 style="color:#0d6e2f; margin:0;">📄 Transaction History</h2>
+            <div></div>
+        </header>
+
+        <div class="card">
+            <div class="filter-wrapper">
+                <button class="filter-btn active" onclick="filterTx('all', this)">All</button>
+                <button class="filter-btn" onclick="filterTx('Deposit', this)">Deposits</button>
+                <button class="filter-btn" onclick="filterTx('Withdrawal', this)">Withdrawals</button>
+                <button class="filter-btn" onclick="filterTx('Investment', this)">Investments</button>
+                <button class="filter-btn" onclick="filterTx('Earning', this)">Earnings</button>
+                <button class="filter-btn" onclick="filterTx('Bonus', this)">Bonus</button>
+                <button class="filter-btn" onclick="filterTx('Referral', this)">Referral</button>
+            </div>
+
+            <div class="table-wrapper">
+                <table id="txTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Type</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="txBody">
+                        <!-- Transactions will load here -->
+                    </tbody>
+                </table>
+            </div>
+            <p id="noTx" style="text-align:center; padding:20px; display:none; color:#888;">No transactions yet</p>
+        </div>
+
+        <nav style="position:fixed; bottom:0; left:0; width:100%; background:#fff; display:flex; justify-content:space-around; align-items:center; padding:8px 0; border-top:1px solid #eee; z-index:9999;">
+            <a href="dashboard.html" style="text-align:center; color:#888; text-decoration:none; font-size:11px;"><div style="font-size:22px;">🏠</div><small>Home</small></a>
+            <a href="investments.html" style="text-align:center; color:#888; text-decoration:none; font-size:11px;"><div style="font-size:22px;">📊</div><small>Invest</small></a>
+            <a href="savings.html" style="text-align:center; color:#888; text-decoration:none; font-size:11px;"><div style="font-size:22px;">💰</div><small>Savings</small></a>
+            <a href="transactions.html" style="text-align:center; color:#0d6e2f; text-decoration:none; font-size:11px;"><div style="font-size:22px;">📄</div><small>History</small></a>
+            <a href="profile.html" style="text-align:center; color:#888; text-decoration:none; font-size:11px;"><div style="font-size:22px;">👤</div><small>Profile</small></a>
+        </nav>
+    </main>
+</div>
+
+<script type="module">
+import { auth, db } from "./firebase.js";
+
+import {
+    onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+
+import {
+    collection,
+    query,
+    orderBy,
+    getDocs,
+    doc,
+    getDoc
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+function toggleSidebar(){ document.querySelector('.sidebar').classList.toggle('active'); }
+
+// NEW: USE SAME KEYS AS DASHBOARD
+
+
+
+
+
+async function loadTransactions(filter = "all") {
+
+    const txBody = document.getElementById("txBody");
+    const noTx = document.getElementById("noTx");
+
+    txBody.innerHTML = "";
+
+    const userRef = doc(db, "users", auth.currentUser.uid);
+
+const userSnap = await getDoc(userRef);
+
+let transactions = [];
+
+if (userSnap.exists()) {
+    transactions = userSnap.data().transactions || [];
+}
+
+console.log(transactions);
+
+
+    let filteredTx = transactions;
+
+
+    if(filter !== "all") {
+        filteredTx = transactions.filter(tx =>
+            (tx.type || "").includes(filter)
+        );
+    }
+
+
+    if(filteredTx.length === 0){
+
+        noTx.style.display = "block";
+        return;
+
+    }
+
+
+    noTx.style.display = "none";
+
+
+    filteredTx.forEach(tx => {
+
+        const statusClass =
+            tx.status === "Approved"
+            ? "status-approved"
+            : tx.status === "Pending"
+            ? "status-pending"
+            : "status-rejected";
+
+
+        const outgoing =
+            (tx.type || "").includes("Withdraw") ||
+            (tx.type || "").includes("Investment");
+
+
+        const sign = outgoing ? "-" : "+";
+        const color = outgoing ? "#dc3545" : "#198754";
+
+
+        txBody.innerHTML += `
+        <tr>
+            <td>#${String(tx.id).slice(-6)}</td>
+            <td>${tx.type}</td>
+            <td style="color:${color};font-weight:bold;">
+                ${sign}₦${Number(tx.amount).toLocaleString()}
+            </td>
+            <td class="${statusClass}">
+                ${tx.status}
+            </td>
+            <td>${tx.date || "N/A"}</td>
+        </tr>
+        `;
+
+    });
+
+}
+function filterTx(type, btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    loadTransactions(type);
+}
+
+// LOAD ON START
+onAuthStateChanged(auth, async (user) => {
+
+    if (!user) {
+        window.location.href = "login.html";
+        return;
+    }
+
+    await loadTransactions();
+
+});
+window.toggleSidebar = toggleSidebar;
+window.filterTx = filterTx;
+</script>
+</body>
+</html>

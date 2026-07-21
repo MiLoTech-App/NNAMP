@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NNAMP - Investments</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body{ padding-bottom: 80px; background:#f7f9fc; }
+        @media (max-width: 768px){.main-content{ padding-bottom: 20px; } }
+.menu-toggle { background: #0d6e2f!important; color: white!important; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px!important; border: none; }
+.close-sidebar { background: #0d6e2f!important; color: white!important; width: 40px; height: 40px; border-radius: 10px; font-size: 22px!important; border: none; position: absolute; top: 15px; right: 15px; }
+.plans-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:20px; margin-top:20px; }
+.plan-card{ background:white; padding:20px; border-radius:15px; box-shadow:0 2px 10px rgba(0,0,0,0.05); border-left:4px solid #0d6e2f; }
+.plan-card h2{ color:#0d6e2f; font-size:24px; margin:10px 0; }
+.progress-bar{ width:100%; height:8px; background:#e9ecef; border-radius:10px; overflow:hidden; margin:8px 0; }
+.progress-fill{ height:100%; background:#0d6e2f; width:0%; transition:width 0.3s; }
+.main-content { overflow: visible!important; }
+#notifDropdown{
+    z-index: 100000!important;
+    position: fixed!important;
+    right: 10px!important;
+    top: 65px!important;
+    width: 92%!important;
+    max-width: 380px!important;
+}
+    </style>
+</head>
+<body>
+<div class="dashboard-layout">
+    <aside class="sidebar">
+        <button class="close-sidebar" onclick="toggleSidebar()">✕</button>
+        <div class="logo">NNAMP<span>🇳🇬</span><p>Grow - Invest - Prosper</p></div>
+        <nav>
+            <a href="dashboard.html">🏠 Dashboard</a>
+            <a href="investments.html" class="active">📊 Investments</a>
+            <a href="savings.html">💰 Savings</a>
+            <a href="deposit.html">⬇️ Deposit</a>
+            <a href="withdraw.html">⬆️ Withdraw</a>
+            <a href="transactions.html">📄 Transactions</a>
+            <a href="referrals.html">👥 Referrals</a>
+            <a href="daily-bonus.html">🎁 Daily Bonus</a>
+            <a href="profile.html">👤 Profile</a>
+            <a href="settings.html">⚙️ Settings</a>
+            <a href="support.html">🎧 Support Center</a>
+            <a href="#" onclick="logout()" style="color:#dc3545;">🚪 Logout</a>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <header style="display:flex; justify-content:space-between; align-items:center; padding:15px 0; background:transparent; position:relative; z-index:9999;">
+            <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+            <div style="text-align:center;">
+                <h2 style="color:#0d6e2f; margin:0; font-size:22px;">📊 Investments</h2>
+                <p style="font-size:12px; color:#888; margin:0;">Earn 7% Daily for 100 Days</p>
+            </div>
+            <div style="display:flex; gap:15px; align-items:center;">
+                <div style="position:relative;">
+                    <span onclick="toggleNotif()" style="position:relative; font-size:20px; cursor:pointer;">🔔
+                        <span id="notifBadge" style="position:absolute; top:-5px; right:-5px; background:red; color:white; font-size:10px; padding:2px 5px; border-radius:50%; display:none;">0</span>
+                    </span>
+                    <div id="notifDropdown" style="display:none; background:white; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.35); max-height:70vh; overflow-y:auto; border:1px solid #ddd;">
+                        <div style="padding:12px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; position:sticky; top:0; background:white; z-index:1;">
+                            <b style="color:#0d6e2f;">Notifications</b>
+                            <span onclick="markAllRead()" style="color:#007bff; font-size:12px; cursor:pointer;">Mark all read</span>
+                        </div>
+                        <div id="notifList" style="padding:10px; color:#333;">
+                            <p style="text-align:center; color:#888;">No notifications</p>
+                        </div>
+                    </div>
+                </div>
+                <div style="width:40px; height:40px; border-radius:50%; background:#0d6e2f; display:flex; align-items:center; justify-content:center; color:white; font-size:22px; font-weight:bold;">👤</div>
+            </div>
+        </header>
+
+        <div class="container">
+            <div id="activePlanBox" style="display:none; background:white; padding:15px; border-radius:12px; margin-bottom:20px; border-left:4px solid #0d6e2f; box-shadow:0 2px 5px rgba(0,0,0,0.05);"></div>
+            <p style="color:#666; margin-bottom:15px;">Choose a plan and start growing your wealth with NNAMP</p>
+            <div class="card" style="background:#e8f5e9;">
+                <p><b>Available to Invest:</b> <span id="availableBalance">₦0.00</span></p>
+                <small id="lockedNote" style="display:none;">Note: <span id="lockedBonus">₦0.00</span> bonus is locked until first deposit</small>
+            </div>
+
+            <div class="plans-grid">
+                <div class="plan-card"><h4>🌱 Starter Plan</h4><h2>7% Daily Return</h2><p><b>Min:</b> ₦3,000</p><p><b>Duration:</b> 100 Days</p><p><b>Daily Profit:</b> ₦210</p><p><b>Total Profit:</b> ₦21,000</p><button class="btn" onclick="buyPlan('Starter Plan', 3000, 0.07)">Invest Now</button></div>
+                <div class="plan-card"><h4>🌿 Basic Plan</h4><h2>7% Daily Return</h2><p><b>Min:</b> ₦5,000</p><p><b>Duration:</b> 100 Days</p><p><b>Daily Profit:</b> ₦350</p><p><b>Total Profit:</b> ₦35,000</p><button class="btn" onclick="buyPlan('Basic Plan', 5000, 0.07)">Invest Now</button></div>
+                <div class="plan-card"><h4>🌳 Standard Plan</h4><h2>7% Daily Return</h2><p><b>Min:</b> ₦10,000</p><p><b>Duration:</b> 100 Days</p><p><b>Daily Profit:</b> ₦700</p><p><b>Total Profit:</b> ₦70,000</p><button class="btn" onclick="buyPlan('Standard Plan', 10000, 0.07)">Invest Now</button></div>
+                <div class="plan-card"><h4>⭐ Classic Plan</h4><h2>7% Daily Return</h2><p><b>Min:</b> ₦20,000</p><p><b>Duration:</b> 100 Days</p><p><b>Daily Profit:</b> ₦1,400</p><p><b>Total Profit:</b> ₦140,000</p><button class="btn" onclick="buyPlan('Classic Plan', 20000, 0.07)">Invest Now</button></div>
+                <div class="plan-card"><h4>🥈 Silver Plan</h4><h2>7% Daily Return</h2><p><b>Min:</b> ₦50,000</p><p><b>Duration:</b> 100 Days</p><p><b>Daily Profit:</b> ₦3,500</p><p><b>Total Profit:</b> ₦350,000</p><button class="btn" onclick="buyPlan('Silver Plan', 50000, 0.07)">Invest Now</button></div>
+                <div class="plan-card"><h4>🥇 Gold Plan</h4><h2>7% Daily Return</h2><p><b>Min:</b> ₦100,000</p><p><b>Duration:</b> 100 Days</p><p><b>Daily Profit:</b> ₦7,000</p><p><b>Total Profit:</b> ₦700,000</p><button class="btn" onclick="buyPlan('Gold Plan', 100000, 0.07)">Invest Now</button></div>
+                <div class="plan-card"><h4>💎 Platinum Plan</h4><h2>7% Daily Return</h2><p><b>Min:</b> ₦200,000</p><p><b>Duration:</b> 100 Days</p><p><b>Daily Profit:</b> ₦14,000</p><p><b>Total Profit:</b> ₦1,400,000</p><button class="btn" onclick="buyPlan('Platinum Plan', 200000, 0.07)">Invest Now</button></div>
+                <div class="plan-card"><h4>👑 Premium Plan</h4><h2>7% Daily Return</h2><p><b>Min:</b> ₦500,000</p><p><b>Duration:</b> 100 Days</p><p><b>Daily Profit:</b> ₦35,000</p><p><b>Total Profit:</b> ₦3,500,000</p><button class="btn" onclick="buyPlan('Premium Plan', 500000, 0.07)">Invest Now</button></div>
+            </div>
+        </div>
+
+        <nav style="position:fixed; bottom:0; left:0; width:100%; background:#fff; display:flex; justify-content:space-around; align-items:center; padding:8px 0; border-top:1px solid #eee; z-index:999; box-shadow:0 -2px 10px rgba(0,0,0,0.05);">
+            <a href="dashboard.html" style="text-align:center; color:#888; text-decoration:none; font-size:11px;"><div style="font-size:22px;">🏠</div><small>Home</small></a>
+            <a href="investments.html" style="text-align:center; color:#0d6e2f; text-decoration:none; font-size:11px;"><div style="font-size:22px;">📊</div><small>Invest</small></a>
+            <a href="savings.html" style="text-align:center; color:#888; text-decoration:none; font-size:11px;"><div style="font-size:22px;">💰</div><small>Savings</small></a>
+            <a href="transactions.html" style="text-align:center; color:#888; text-decoration:none; font-size:11px;"><div style="font-size:22px;">📄</div><small>History</small></a>
+            <a href="profile.html" style="text-align:center; color:#888; text-decoration:none; font-size:11px;"><div style="font-size:22px;">👤</div><small>Profile</small></a>
+        </nav>
+    </main>
+</div>
+
+<script type="module">
+  import { auth, db } from "./firebase.js";
+
+import {
+    onAuthStateChanged,
+    signOut
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+
+import {
+    doc,
+    getDoc,
+    collection,
+    addDoc,
+    getDocs,
+    query,
+    where,
+    orderBy,
+    updateDoc,
+    deleteDoc,
+    increment,
+    Timestamp,
+    serverTimestamp
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+async function saveUser(userData) {
+    await updateDoc(
+        doc(db, "users", auth.currentUser.uid),
+        {
+            balance: userData.balance,
+            lockedBonus: userData.lockedBonus,
+            hasInvested: userData.hasInvested,
+            totalEarned: userData.totalEarned || 0,
+            transactions: userData.transactions || []
+        }
+    );
+}
+let currentUser = null;
+
+onAuthStateChanged(auth, async (user) => {
+
+    if (!user) {
+        window.location.href = "login.html";
+        return;
+    }
+
+    const snap = await getDoc(doc(db, "users", user.uid));
+
+    if (!snap.exists()) {
+        showAlert("Error", "User not found.", "error");
+        return;
+    }
+
+    currentUser = snap.data();
+
+    currentUser.balance = Number(currentUser.balance) || 0;
+    currentUser.lockedBonus = Number(currentUser.lockedBonus) || 0;
+
+    window.onload();
+
+});
+function showAlert(title, message, type = "info") {
+
+
+    let alertDiv = document.createElement("div");
+    alertDiv.className = "custom-alert";
+    alertDiv.innerHTML = `
+        <div class="custom-alert-box ${type}">
+            <h3>${title}</h3>
+            <p>${message}</p>
+            <button class="custom-alert-btn" onclick="this.closest('.custom-alert').remove()">OK</button>
+        </div>
+    `;
+    document.body.appendChild(alertDiv);
+    setTimeout(() => { if(document.body.contains(alertDiv)){ alertDiv.remove(); } }, 3000);
+}
+function showConfirm(title, message, onConfirm) {
+    let confirmDiv = document.createElement("div");
+    confirmDiv.className = "custom-alert";
+    confirmDiv.innerHTML = `
+        <div class="custom-alert-box info">
+            <h3>${title}</h3>
+            <p>${message}</p>
+            <div style="display:flex; gap:10px; margin-top:15px;">
+                <button class="custom-alert-btn" style="background:#6c757d; flex:1;" onclick="this.closest('.custom-alert').remove()">Cancel</button>
+                <button class="custom-alert-btn" id="confirmYesBtn" style="background:#0d6e2f; flex:1;">OK</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(confirmDiv);
+    document.getElementById('confirmYesBtn').onclick = function(){
+        confirmDiv.remove();
+        if(onConfirm) onConfirm();
+    }
+}
+
+
+function toggleSidebar(){ document.querySelector('.sidebar').classList.toggle('active'); }
+
+function logout(){
+    showAlert("Logged Out 👋", "You have been logged out successfully", "info");
+    setTimeout(() => {
+        localStorage.removeItem('nnampCurrentUser');
+        window.location.href = "login.html";
+    }, 1500);
+}
+
+function formatMoney(n){ return '₦' + Number(n).toLocaleString('en-NG', {minimumFractionDigits:0, maximumFractionDigits:2}); }
+
+function addTransaction(type, amount, status, note){
+    if(!currentUser.transactions) currentUser.transactions = [];
+    currentUser.transactions.unshift({id: Date.now(), type, amount: parseFloat(amount), status, date: new Date().toLocaleString(), note});
+    saveUser(currentUser);
+}
+
+window.onload = function(){
+    let available = currentUser.balance - (currentUser.lockedBonus || 0);
+    document.getElementById('availableBalance').innerText = formatMoney(available);
+    document.getElementById('lockedBonus').innerText = formatMoney(currentUser.lockedBonus || 0);
+    if(currentUser.lockedBonus > 0) document.getElementById('lockedNote').style.display = 'block';
+    loadActivePlans();
+    loadNotifications();
+}
+
+function buyPlan(name, amount, percent){
+    let withdrawableBalance = currentUser.balance - (currentUser.lockedBonus || 0);
+    if(amount > withdrawableBalance){
+        if(currentUser.lockedBonus > 0){
+            showAlert("Deposit Required 🔒", "You need to make your first deposit to unlock your full balance for investment.", "error");
+        } else {
+            showAlert("Insufficient Balance ❌", `Available: ${formatMoney(withdrawableBalance)}`, "error");
+        }
+        return;
+    }
+
+    // FIXED: REPLACED UGLY CONFIRM WITH BEAUTIFUL POPUP
+    showConfirm(
+        "Confirm Investment",
+        `Invest ${formatMoney(amount)} in ${name}?\nDaily Profit: ${formatMoney(amount * percent)} for 100 days`,
+        async function() {
+            currentUser.balance -= amount;
+            if(!currentUser.hasInvested){
+                currentUser.hasInvested = true;
+                currentUser.lockedBonus = 0;
+                if (currentUser.referredBy) {
+
+    const bonus = amount * 0.15;
+
+    const refQuery = query(
+        collection(db, "users"),
+        where("phone", "==", currentUser.referredBy)
+    );
+
+    const refSnapshot = await getDocs(refQuery);
+
+    if (!refSnapshot.empty) {
+
+        const refDoc = refSnapshot.docs[0];
+
+        await updateDoc(refDoc.ref, {
+    balance: increment(bonus),
+    totalEarned: increment(bonus),
+    referralBonus: increment(bonus)
+});
+const refUserSnap = await getDoc(refDoc.ref);
+
+const refUserData = refUserSnap.data();
+
+let refTransactions = refUserData.transactions || [];
+
+refTransactions.unshift({
+    id: Date.now(),
+    type: "Referral",
+    amount: bonus,
+    status: "Approved",
+    note: `Referral bonus from ${currentUser.fullname}`,
+    date: new Date().toLocaleString()
+});
+
+await updateDoc(refDoc.ref, {
+    transactions: refTransactions
+});
+await addDoc(collection(db, "referrals"), {
+    referrerId: refDoc.id,
+    referrerPhone: currentUser.referredBy,
+
+    referredUserId: auth.currentUser.uid,
+    referredName: currentUser.fullname,
+    referredPhone: currentUser.phone,
+
+    investmentAmount: amount,
+    bonus: bonus,
+
+    status: "Active",
+
+    createdAt: serverTimestamp()
+});
+
+        await addDoc(collection(db, "notifications"), {
+            userId: refDoc.id,
+            title: "Referral Bonus",
+            msg: `You received ${formatMoney(bonus)} for referring ${currentUser.name}.`,
+            read: false,
+            date: new Date().toLocaleString()
+        });
+    }
+}
+            }
+            saveUser(currentUser);
+
+let dailyProfit = amount * percent;
+let totalProfit = dailyProfit * 100;
+
+// Save investment to Firebase
+await addDoc(collection(db, "investments"), {
+    userId: auth.currentUser.uid,
+    phone: currentUser.phone,
+    name: name,
+    amount: amount,
+    percent: percent,
+    dailyProfit: dailyProfit,
+    totalProfit: totalProfit,
+    startTime: Date.now(),
+    endTime: Date.now() + (100 * 24 * 60 * 60 * 1000),
+    lastPaid: Date.now(),
+    status: "Active"
+});
+
+currentUser.transactions = currentUser.transactions || [];
+
+currentUser.transactions.unshift({
+    id: Date.now(),
+    type: "Investment",
+    amount: amount,
+    status: "Approved",
+    date: new Date().toLocaleString(),
+    note: `Invested in ${name}`
+});
+
+await saveUser(currentUser);
+
+showAlert(
+    "Investment Activated ✅",
+    `${name} activated!\n${formatMoney(dailyProfit)} daily for 100 days.`,
+    "success"
+);
+
+setTimeout(() => location.reload(), 2000);
+        }
+    );
+}
+
+async function loadActivePlans(){
+  const q = query(
+    collection(db, "investments"),
+    where("userId", "==", auth.currentUser.uid)
+);
+
+const snapshot = await getDocs(q);
+
+let plans = [];
+
+snapshot.forEach((docSnap) => {
+    plans.push({
+        id: docSnap.id,
+        ...docSnap.data()
+    });
+});
+    let container = document.getElementById('activePlanBox');
+    if(plans.length > 0){
+        container.style.display = 'block';
+        container.innerHTML = '<h4 style="margin:0 0 10px 0; color:#0d6e2f;">📊 My Active Investments</h4>';
+        plans.forEach(plan => {
+            if(!plan.dailyProfit) plan.dailyProfit = plan.amount * plan.percent;
+            if(!plan.totalProfit) plan.totalProfit = plan.dailyProfit * 100;
+            if(!plan.lastPaid) plan.lastPaid = plan.startTime;
+            let totalTime = 100 * 24 * 60 * 60 * 1000;
+            let timePassed = new Date().getTime() - plan.startTime;
+            let progress = (timePassed / totalTime) * 100;
+            container.innerHTML += `
+                <div style="margin-bottom:20px; padding-bottom:15px; border-bottom:1px solid #eee;">
+                    <p style="margin:0; font-size:15px; color:#666;">${plan.name} - ${formatMoney(plan.amount)}</p>
+                    <p style="margin:5px 0; color:#0d6e2f; font-weight:bold; font-size:16px;">${formatMoney(plan.dailyProfit)} Daily</p>
+                    <p style="margin:5px 0; font-size:13px;">Total Profit: <b>${formatMoney(plan.totalProfit)}</b></p>
+                    <div class="progress-bar"><div class="progress-fill" id="progress-${plan.id}" style="width:${progress}%"></div></div>
+                    <p style="margin:5px 0; font-size:13px;">Next earning in: <span id="countdown-${plan.id}" style="font-weight:bold; color:#0d6e2f;">24h 00m 00s</span></p>
+                    <p style="margin:5px 0; font-size:12px; color:#888;">Days Left: <span id="daysleft-${plan.id}">100</span> Days</p>
+                </div>
+            `;
+            startCountdown(plan);
+        });
+    }
+}
+
+async function startCountdown(plan) {
+    setInterval(async () => {
+        let now = new Date().getTime();
+        let distance = plan.endTime - now;
+        let daysLeft = Math.ceil(distance / (1000 * 60 * 60 * 24));
+        let elDays = document.getElementById(`daysleft-${plan.id}`);
+        if(elDays) elDays.innerText = daysLeft > 0? daysLeft : 0;
+        let totalTime = 100 * 24 * 60 * 60 * 1000;
+        let timePassed = now - plan.startTime;
+        let progress = (timePassed / totalTime) * 100;
+        let elProgress = document.getElementById(`progress-${plan.id}`);
+        if(elProgress) elProgress.style.width = progress + '%';
+        let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        let seconds = Math.floor((distance % (1000 * 60)) / 1000);
+        let el = document.getElementById(`countdown-${plan.id}`);
+        if(el) el.innerText = hours + "h " + minutes + "m " + seconds + "s";
+        if(now - plan.lastPaid >= 24 * 60 * 60 * 1000 && distance > 0){
+            plan.lastPaid = now;
+            currentUser.balance += plan.dailyProfit;
+            saveUser(currentUser);
+            console.log(currentUser.transactions);
+            addTransaction('Investment Earning', plan.dailyProfit, 'Approved', `${plan.name} Daily Profit`);
+            showAlert("Earning Credited 💰", `${formatMoney(plan.dailyProfit)} added from ${plan.name}`, "success");
+            await updateDoc(doc(db, "investments", plan.id), {
+    lastPaid: now
+});
+        }
+        if(distance <= 0 && plan.status === "Active"){
+            await deleteDoc(doc(db, "investments", plan.id));
+            showAlert("Investment Completed 🎉", `${plan.name} Completed!\nYou earned ${formatMoney(plan.totalProfit)} in total profit.`, "success");
+            setTimeout(() => location.reload(), 2500);
+        }
+    }, 1000);
+}
+
+// NOTIFICATION SYSTEM
+async function loadNotifications(){
+
+    const snap = await getDocs(
+        query(
+            collection(db, "broadcasts"),
+            orderBy("createdAt", "desc")
+        )
+    );
+
+    let badge = document.getElementById("notifBadge");
+    let list = document.getElementById("notifList");
+
+    if(snap.empty){
+        badge.style.display = "none";
+        list.innerHTML = "<p style='text-align:center;color:#888;'>No notifications</p>";
+        return;
+    }
+
+    const userRef = doc(db, "users", auth.currentUser.uid);
+const userSnap = await getDoc(userRef);
+
+const userData = userSnap.data();
+
+const lastRead = userData.lastNotificationReadAt || Timestamp.fromMillis(0);
+
+let unread = 0;
+
+snap.forEach(docSnap => {
+
+    const n = docSnap.data();
+
+    if (n.createdAt && n.createdAt.toMillis() > lastRead.toMillis()) {
+        unread++;
+    }
+
+});
+
+if (unread > 0) {
+
+    badge.style.display = "block";
+    badge.innerText = unread > 9 ? "9+" : unread;
+
+} else {
+
+    badge.style.display = "none";
+
+}
+    
+
+    list.innerHTML = "";
+
+    snap.forEach(docSnap => {
+
+        const n = docSnap.data();
+
+        let date = n.createdAt
+            ? n.createdAt.toDate().toLocaleString()
+            : "Just now";
+
+        list.innerHTML += `
+            <div style="padding:14px;margin-bottom:10px;background:#fff;border-radius:8px;border-left:4px solid #0d6e2f;">
+                <p style="margin:0;font-weight:bold;color:#0d6e2f;">📢 Admin Broadcast</p>
+                <p style="margin:8px 0;">${n.message}</p>
+                <small style="color:#888;">${date}</small>
+            </div>
+        `;
+
+    });
+
+}
+
+function toggleNotif(){
+
+    window.location.href = "notifications.html";
+
+}
+
+async function markRead(id){
+    await updateDoc(doc(db, "notifications", id), {
+    read: true
+});
+
+loadNotifications();
+}
+
+async function markAllRead(){
+    const q = query(
+    collection(db, "notifications"),
+    where("userId", "==", auth.currentUser.uid)
+);
+
+const snapshot = await getDocs(q);
+
+for (const docSnap of snapshot.docs) {
+    await updateDoc(doc(db, "notifications", docSnap.id), {
+        read: true
+    });
+}
+
+loadNotifications();
+}
+
+document.addEventListener('click', function(e){
+    let dropdown = document.getElementById('notifDropdown');
+    if(dropdown &&!e.target.closest('#notifDropdown') &&!e.target.closest('[onclick="toggleNotif()"]')){
+        dropdown.style.display = 'none';
+    }
+});
+window.toggleSidebar = toggleSidebar;
+window.logout = logout;
+window.buyPlan = buyPlan;
+window.toggleNotif = toggleNotif;
+window.markRead = markRead;
+window.markAllRead = markAllRead;
+</script>
+
+<script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NNAMP - Support Center</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .sidebar { height: 100vh; overflow: hidden; padding-top: 8px; }
+        .sidebar .logo { padding: 12px 20px; margin-bottom: 5px; }
+        .sidebar nav a { padding: 8px 20px; font-size: 14px; }
+        .support-card { background:white; padding:20px; border-radius:12px; margin-bottom:15px; }
+        .support-btn {
+            display:block; width:100%; background:#0d6e2f; color:white; 
+            padding:12px; border-radius:10px; text-align:center; 
+            text-decoration:none; font-weight:bold; margin-top:10px;
+        }
+        .email-text {
+            display:block; width:100%; background:#f1f1f1; color:#333; 
+            padding:12px; border-radius:10px; text-align:center; 
+            font-weight:bold; margin-top:10px; border:1px dashed #ccc;
+        }
+        .menu-toggle{
+    background:#0d6e2f;
+    color:#fff;
+    width:40px;
+    height:40px;
+    border:none;
+    border-radius:10px;
+    font-size:22px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+}
+
+.close-sidebar{
+    position:absolute;
+    top:15px;
+    right:15px;
+    background:#0d6e2f;
+    color:#fff;
+    width:40px;
+    height:40px;
+    border:none;
+    border-radius:10px;
+    font-size:22px;
+    cursor:pointer;
+}
+    </style>
+</head>
+<body>
+<div class="dashboard-layout">
+    <aside class="sidebar">
+      <button class="close-sidebar" onclick="toggleSidebar()">✕</button>
+        <div class="logo">NNAMP🌱🇳🇬<span>.</span><p>Grow - Invest - Prosper</p></div>
+        <nav>
+            <a href="dashboard.html">🏠 Dashboard</a>
+            <a href="investments.html">📊 Investments</a>
+            <a href="savings.html">💰 Savings</a>
+            <a href="deposit.html">⬇️ Deposit</a>
+            <a href="withdraw.html">⬆️ Withdraw</a>
+            <a href="transactions.html">📄 Transactions</a>
+            <a href="referrals.html">👥 Referrals</a>
+            <a href="daily-bonus.html">🎁 Daily Bonus</a>
+            <a href="notifications.html">🔔 Notifications</a>
+            <a href="profile.html">👤 Profile</a>
+            <a href="settings.html">⚙️ Settings</a>
+            <a href="support.html" class="active">🎧 Support Center</a>
+            <a href="#" onclick="logout()" style="color:#dc3545;">🚪 Logout</a>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <header style="display:flex;justify-content:space-between;align-items:center;padding:15px 0;">
+    <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+    <h2 style="margin:0;color:#0d6e2f;">🎧 Support Center</h2>
+    <div></div>
+</header>
+        
+        <div class="support-card">
+            <h3>Need Help?</h3>
+            <p>Our support team is available 24/7 to help you with deposits, withdrawals, and account issues.</p>
+            
+            <a href="https://wa.me/234XXXXXXXXXX" class="support-btn" target="_blank">💬 Chat on WhatsApp</a>
+            
+            <!-- EMAIL IS NOW JUST TEXT, NOT CLICKABLE -->
+            <div class="email-text">📧 email support@nnamp.com</div>
+        </div>
+
+        <div class="support-card">
+            <h3>📋 Frequently Asked Questions</h3>
+            <p><b>Q: How long do withdrawals take?</b><br>A: Instant to 24 hours</p>
+            <p><b>Q: What is the minimum deposit?</b><br>A: ₦3,000</p>
+            <p><b>Q: How do I earn daily?</b><br>A: Invest in any plan to get 7% daily</p>
+        </div>
+
+    </main>
+</div>
+<script>
+function toggleSidebar(){
+    document.querySelector(".sidebar").classList.toggle("active");
+}
+function logout(){
+
+    showAlert(
+        "Logged Out 👋",
+        "You have been logged out",
+        "info"
+    );
+
+    setTimeout(()=>{
+        localStorage.removeItem("nnamp_current_user");
+        window.location.href = "login.html";
+    },1500);
+
+}
+function showAlert(title, message, type = "info") {
+    let alertDiv = document.createElement("div");
+    alertDiv.className = "custom-alert";
+    
+    let icon = type === "success"? "✅" : type === "error"? "❌" : "ℹ️";
+    let color = type === "success"? "#198754" : type === "error"? "#dc3545" : "#0d6e2f";
+    
+    alertDiv.innerHTML = `
+        <div class="custom-alert-box" style="border-top:4px solid ${color}">
+            <h3>${icon} ${title}</h3>
+            <p style="white-space:pre-line;">${message}</p>
+            <button class="custom-alert-btn" onclick="this.closest('.custom-alert').remove()">OK</button>
+        </div>
+    `;
+    document.body.appendChild(alertDiv);
+
+    setTimeout(() => {
+        if(document.body.contains(alertDiv)){
+            alertDiv.remove();
+        }
+    }, 3000);
+}
+window.toggleSidebar = toggleSidebar;
+window.logout = logout;
+</script>
+</body>
+</html>

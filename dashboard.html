@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NNAMP - Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body{ padding-bottom: 80px; background:#f7f9fc; }
+        @media (max-width: 768px){.main-content{ padding-bottom: 20px; } }
+  .balance-card * { color: white!important; }
+  .menu-toggle { background: #0d6e2f!important; color: white!important; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px!important; border: none; }
+  .close-sidebar { background: #0d6e2f!important; color: white!important; width: 40px; height: 40px; border-radius: 10px; font-size: 22px!important; font-weight: bold; border: none; position: absolute; top: 15px; right: 15px; }
+  .sidebar{
+    position: fixed;
+    top: 0;
+    left: -280px;
+    width: 260px;
+    height: 100vh;
+    overflow: hidden;
+    padding-top: 8px;
+    background: #ffffff;
+    transition: left 0.3s ease;
+    z-index: 9999;
+}
+.sidebar.active{
+    left: 0;
+}
+  .sidebar.logo { padding: 12px 20px; margin-bottom: 5px; }
+  .sidebar.logo p { font-size: 11px; }
+  .sidebar nav a { padding: 8px 20px; font-size: 14px; }
+  .notification-icon { position: relative; font-size: 20px; text-decoration: none; cursor: pointer; color: #333; }
+  .notif-dot { position: absolute; top: -5px; right: -5px; background: red; color: white; font-size: 10px; padding: 2px 5px; border-radius: 50%; min-width: 18px; text-align: center; }
+  .notif-dot.hidden { display: none; }
+  .sidebar.notif-dot-sidebar { width: 8px; height: 8px; background: red; border-radius: 50%; display: inline-block; margin-left: 8px; }
+  .sidebar.notif-dot-sidebar.hidden { display: none; }
+  .balance-card { background: linear-gradient(135deg, #0d6e2f, #198754); color: white; padding: 20px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 12px; }
+  .balance-text { flex: 1; min-width: 0; }
+  .balance-amount-row { display: flex; align-items: center; gap: 8px; margin: 5px 0; min-width: 0; }
+  .balance-amount { font-size: clamp(14px, 4vw, 28px); white-space: nowrap; min-width: 0; }
+  .eye-icon { font-size: 24px; cursor: pointer; flex-shrink: 0; }
+  .balance-icon { font-size: 70px; flex-shrink: 0; line-height: 1; }
+        @media (max-width: 400px){.balance-icon { font-size: 50px; } }
+  .plans-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(250px, 1fr)); gap:15px; margin:20px 0; }
+  .plan-card{ background:white; padding:15px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.05); }
+  .stat-card{ background:#fff; padding:15px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.05); }
+
+    /* CUSTOM POPUP - ADDED */
+  .custom-alert {position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 99999; animation: popIn 0.3s ease;}
+  .custom-alert-box {background: white; padding: 25px 20px; border-radius: 15px; text-align: center; width: 90%; max-width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); white-space: pre-line;}
+  .custom-alert-box.success { border-top: 4px solid #28a745; }
+  .custom-alert-box.error { border-top: 4px solid #dc3545; }
+  .custom-alert-box.info { border-top: 4px solid #0d6e2f; }
+  .custom-alert-box h3 { margin: 0 0 10px 0; color: #0d6e2f; font-size: 18px; }
+  .custom-alert-box p { margin: 0 0 15px 0; color: #333; font-size: 14px; }
+  .custom-alert-btn {background: #0d6e2f; color: white; border: none; padding: 10px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; width:100%;}
+    @keyframes popIn { from {transform: scale(0.8); opacity:0;} to {transform: scale(1); opacity:1;} }
+    </style>
+</head>
+<body>
+<div class="dashboard-layout">
+    <aside class="sidebar">
+       <button class="close-sidebar" onclick="toggleSidebar()">✕</button>
+        <div class="logo">NNAMP🌱🇳🇬<span></span><p>Grow - Invest - Prosper</p></div>
+        <nav>
+            <a href="dashboard.html" class="active">🏠 Dashboard</a>
+            <a href="investments.html">📊 Investments</a>
+            <a href="savings.html">💰 Savings</a>
+            <a href="deposit.html">⬇️ Deposit</a>
+            <a href="withdraw.html">⬆️ Withdraw</a>
+            <a href="transactions.html">📄 Transactions</a>
+            <a href="referrals.html">👥 Referrals</a>
+            <a href="daily-bonus.html">🎁 Daily Bonus</a>
+            <a href="notifications.html">🔔 Notifications<span class="notif-dot-sidebar hidden" id="sidebarDot"></span></a>
+            <a href="profile.html">👤 Profile</a>
+            <a href="settings.html">⚙️ Settings</a>
+            <a href="support.html">🎧 Support Center</a>
+            <a href="#" onclick="logout()" style="color:#dc3545;">🚪 Logout</a>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <header style="display:flex; justify-content:space-between; align-items:center; padding:15px 0; background:transparent;">
+            <button class="menu-toggle" id="menuBtn">☰</button>
+            <div style="text-align:center;"><h2 style="color:#0d6e2f; margin:0; font-size:22px;">📈 NNAMP</h2><p style="font-size:12px; color:#888; margin:0;">Grow • Invest • Prosper</p></div>
+            <div style="display:flex; gap:15px; align-items:center;">
+<a href="#" class="notification-icon" onclick="openNotifications(event)">
+    🔔
+    <span class="notif-dot hidden" id="notifCount"></span>
+</a>
+                <div style="width:40px; height:40px; border-radius:50%; background:#0d6e2f; display:flex; align-items:center; justify-content:center; color:white; font-size:27px; font-weight:bold;">👤</div>
+            </div>
+        </header>
+
+        <div class="container">
+            <div class="balance-card">
+                <div class="balance-text">
+                    <p>Welcome back, <b id="userName">User</b> 👋</p>
+                    <p style="font-size:13px; opacity:0.9;">Account Balance</p>
+                    <div class="balance-amount-row">
+                        <h2 class="balance-amount" id="balanceAmount">₦0</h2>
+                        <span class="eye-icon" id="eyeIcon">👁️</span>
+                    </div>
+                    <span style="background:rgba(255,255,255,0.2); padding:4px 10px; border-radius:20px; font-size:12px; display:inline-block;">+7% vs yesterday 📈</span>
+                </div>
+                <div class="balance-icon">💼</div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; margin:20px 0;">
+                <a href="deposit.html" style="background:#e8f5e9; padding:15px 10px; border-radius:12px; text-align:center; text-decoration:none; color:#333;"><div style="font-size:24px;">⬇️</div><b>Deposit</b><p style="font-size:11px; color:#888;">Fund Account</p></a>
+                <a href="withdraw.html" style="background:#ffebee; padding:15px 10px; border-radius:12px; text-align:center; text-decoration:none; color:#333;"><div style="font-size:24px;">⬆️</div><b>Withdraw</b><p style="font-size:11px; color:#888;">Withdraw Funds</p></a>
+                <a href="investments.html" style="background:#e8f5e9; padding:15px 10px; border-radius:12px; text-align:center; text-decoration:none; color:#333;"><div style="font-size:24px;">📊</div><b>Investments</b><p style="font-size:11px; color:#888;">Grow Wealth</p></a>
+                <a href="savings.html" style="background:#e8f5e9; padding:15px 10px; border-radius:12px; text-align:center; text-decoration:none; color:#333;"><div style="font-size:24px;">💰</div><b>Savings</b><p style="font-size:11px; color:#888;">Save & Earn</p></a>
+                <a href="referrals.html" style="background:#ffebee; padding:15px 10px; border-radius:12px; text-align:center; text-decoration:none; color:#333;"><div style="font-size:24px;">👥</div><b>Referrals</b><p style="font-size:11px; color:#888;">Invite & Earn</p></a>
+                <a href="daily-bonus.html" style="background:#fff8e1; padding:15px 10px; border-radius:12px; text-align:center; text-decoration:none; color:#333;"><div style="font-size:24px;">🎁</div><b>Bonuses</b><p style="font-size:11px; color:#888;">Daily Bonus</p></a>
+            </div>
+
+            <div style="background:#e8f5e9; padding:15px; border-radius:15px; display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <div><h4 style="color:#0d6e2f; margin:0;">Refer your friends</h4><p style="font-size:13px;">and get an amazing reward!</p><a href="referrals.html" class="btn" style="padding:8px 15px; font-size:13px;">Refer Now ></a></div>
+                <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" style="width:80px;">
+            </div>
+
+            <h3>Available Investment Plans</h3>
+            <div class="plans-grid">
+                <div class="plan-card"><h4>🌱 Starter Plan</h4><h2>7% Daily Return</h2><p>Min: ₦3,000</p><button class="btn" onclick="buyPlan('Starter Plan', 3000, 0.07)">Invest Now</button></div>
+                <div class="plan-card"><h4>🌿 Basic Plan</h4><h2>7% Daily Return</h2><p>Min: ₦5,000</p><button class="btn" onclick="buyPlan('Basic Plan', 5000, 0.07)">Invest Now</button></div>
+                <div class="plan-card"><h4>🌳 Standard Plan</h4><h2>7% Daily Return</h2><p>Min: ₦10,000</p><button class="btn" onclick="buyPlan('Standard Plan', 10000, 0.07)">Invest Now</button></div>
+                <div class="plan-card"><h4>⭐ Classic Plan</h4><h2>7% Daily Return</h2><p>Min: ₦20,000</p><button class="btn" onclick="buyPlan('Classic Plan', 20000, 0.07)">Invest Now</button></div>
+                <div class="plan-card"><h4>🥈 Silver Plan</h4><h2>7% Daily Return</h2><p>Min: ₦50,000</p><button class="btn" onclick="buyPlan('Silver Plan', 50000, 0.07)">Invest Now</button></div>
+                <div class="plan-card"><h4>🥇 Gold Plan</h4><h2>7% Daily Return</h2><p>Min: ₦100,000</p><button class="btn" onclick="buyPlan('Gold Plan', 100000, 0.07)">Invest Now</button></div>
+                <div class="plan-card"><h4>💎 Platinum Plan</h4><h2>7% Daily Return</h2><p>Min: ₦200,000</p><button class="btn" onclick="buyPlan('Platinum Plan', 200000, 0.07)">Invest Now</button></div>
+                <div class="plan-card"><h4>👑 Premium Plan</h4><h2>7% Daily Return</h2><p>Min: ₦500,000</p><button class="btn" onclick="buyPlan('Premium Plan', 500000, 0.07)">Invest Now</button></div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:10px; margin:20px 0;">
+                <div class="stat-card"><p>💰 Wallet Balance</p><h4 id="walletStat">₦0</h4></div>
+                <div class="stat-card"><p>📊 Total Investments</p><h4 id="totalInvested">₦0</h4></div>
+                <div class="stat-card"><p>💰 Total Savings Locked</p><h4 id="totalSavings">₦0</h4></div>
+                <div class="stat-card"><p>👥 Total Referrals</p><h4 id="totalReferrals">0</h4></div>
+            </div>
+        </div>
+
+        <nav style="position:fixed; bottom:0; left:0; width:100%; background:#fff; display:flex; justify-content:space-around; align-items:center; padding:8px 0; border-top:1px solid #eee; z-index:9999; box-shadow:0 -2px 10px rgba(0,0,0,0.05);">
+            <a href="dashboard.html" style="text-align:center; color:#0d6e2f; text-decoration:none; font-size:11px;"><div style="font-size:22px;">🏠</div><small>Home</small></a>
+            <a href="investments.html" style="text-align:center; color:#888; text-decoration:none; font-size:11px;"><div style="font-size:22px;">📊</div><small>Invest</small></a>
+            <a href="savings.html" style="text-align:center; color:#888; text-decoration:none; font-size:11px;"><div style="font-size:22px;">💰</div><small>Savings</small></a>
+            <a href="transactions.html" style="text-align:center; color:#888; text-decoration:none; font-size:11px;"><div style="font-size:22px;">📄</div><small>History</small></a>
+            <a href="profile.html" style="text-align:center; color:#888; text-decoration:none; font-size:11px;"><div style="font-size:22px;">👤</div><small>Profile</small></a>
+        </nav>
+    </main>
+</div>
+
+<script type="module">
+import { auth, db } from "./firebase.js";
+
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+
+import {
+    doc,
+    getDoc,
+    updateDoc,
+    collection,
+    getDocs,
+    onSnapshot,
+    addDoc,
+    serverTimestamp,
+    Timestamp,
+    query,
+    where,
+    orderBy,
+    arrayUnion
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+// ========== CUSTOM POPUP FUNCTIONS - ADDED ==========
+function showAlert(title, message, type = "info") {
+
+
+    let alertDiv = document.createElement("div");
+    alertDiv.className = "custom-alert";
+    alertDiv.innerHTML = `
+        <div class="custom-alert-box ${type}">
+            <h3>${title}</h3>
+            <p>${message}</p>
+            <button class="custom-alert-btn" onclick="this.closest('.custom-alert').remove()">OK</button>
+        </div>
+    `;
+    document.body.appendChild(alertDiv);
+    setTimeout(() => { if(document.body.contains(alertDiv)){ alertDiv.remove(); } }, 3000);
+}
+
+function showConfirm(title, message, onConfirm) {
+    let confirmDiv = document.createElement("div");
+    confirmDiv.className = "custom-alert";
+    confirmDiv.innerHTML = `
+        <div class="custom-alert-box info">
+            <h3>${title}</h3>
+            <p>${message}</p>
+            <div style="display:flex; gap:10px; margin-top:15px;">
+                <button class="custom-alert-btn" style="background:#6c757d; flex:1;" onclick="this.closest('.custom-alert').remove()">Cancel</button>
+                <button class="custom-alert-btn" id="confirmYesBtn" style="background:#0d6e2f; flex:1;">OK</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(confirmDiv);
+    document.getElementById('confirmYesBtn').onclick = function(){
+        confirmDiv.remove();
+        if(onConfirm) onConfirm();
+    }
+}
+// ========== END POPUP FUNCTIONS ==========
+
+function getUsers() { return JSON.parse(localStorage.getItem('nnampUsers')) || []; }
+function saveUsers(users) { localStorage.setItem('nnampUsers', JSON.stringify(users)); }
+
+function getCurrentUser() {
+    let phone = localStorage.getItem('nnampCurrentUser');
+    if(!phone){
+        showAlert("Login Required ❌", "Please login first", "error");
+        setTimeout(() => window.location.href = "login.html", 1500);
+        return null;
+    }
+    return getUsers().find(u => u.phone === phone);
+}
+
+function saveUser(user){
+    user.balance = parseFloat(user.balance) || 0; // FORCE TO NUMBER BEFORE SAVE
+    let users = getUsers();
+    users = users.map(u => u.phone === user.phone? user : u);
+    saveUsers(users);
+}
+
+let currentUser = null;
+onAuthStateChanged(auth, async (user) => {
+
+    if (!user) {
+        window.location.href = "login.html";
+        return;
+    }
+
+    const snap = await getDoc(doc(db, "users", user.uid));
+
+    if (!snap.exists()) {
+        showAlert("Error", "User not found.", "error");
+        return;
+    }
+
+    currentUser = snap.data();
+    currentUser.balance = parseFloat(currentUser.balance) || 0;
+    updateNotifUI();
+    listenForBroadcasts();
+    initDashboard();
+
+});
+
+// FORCE BALANCE TO NUMBER ON LOAD
+
+function toggleSidebar() {
+    const sidebar = document.querySelector(".sidebar");
+
+    sidebar.classList.toggle("active");
+
+
+}
+async function logout() {
+    showAlert("Logged Out 👋", "You have been logged out successfully", "info");
+
+    setTimeout(async () => {
+        await signOut(auth);
+        window.location.href = "login.html";
+    }, 1500);
+}
+
+function formatMoney(n){
+  let num = parseFloat(n) || 0;
+  if(num === 0) return '₦0';
+  return '₦' + num.toLocaleString('en-NG', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+}
+
+function checkMaturedSavings(){
+    if(!currentUser.savings) return;
+    let matured = [];
+    let today = new Date();
+    currentUser.savings.forEach(s => {
+        if(s.status === "Active"){
+            let maturityDate = new Date(s.maturityDate);
+            if(today >= maturityDate){
+                currentUser.balance = parseFloat(currentUser.balance) + parseFloat(s.totalReturn);
+                s.status = "Completed";
+                s.completedDate = today.toISOString();
+                matured.push(s);
+                addTransaction('Savings Payout', s.totalReturn, 'Approved', `${s.plan} Matured`);
+            }
+        }
+    });
+    if(matured.length > 0){
+        saveUser(currentUser);
+        let totalPaid = matured.reduce((sum, s) => sum + parseFloat(s.totalReturn), 0);
+        showAlert("Congratulations 🎉", `${matured.length} Savings plan(s) matured.\n${formatMoney(totalPaid)} credited to your balance.`, "success");
+    }
+}
+
+async function addTransaction(type, amount, status, note){
+
+    await addDoc(
+        collection(db, "users", auth.currentUser.uid, "transactions"),
+        {
+            type: type,
+            amount: parseFloat(amount),
+            status: status,
+            note: note,
+            createdAt: serverTimestamp()
+        }
+    );
+
+}
+
+let balanceVisible = true;
+function toggleBalance(){
+  const balanceEl = document.getElementById('balanceAmount');
+  const eyeIcon = document.getElementById('eyeIcon');
+  if(balanceVisible){
+    balanceEl.innerText = "₦****";
+    eyeIcon.innerText = "🙈";
+    balanceVisible = false;
+  }
+  else {
+    balanceEl.innerText = formatMoney(currentUser.balance);
+    eyeIcon.innerText = "👁️";
+    balanceVisible = true;
+  }
+}
+
+async function updateNotifUI(){
+
+    const userRef = doc(db, "users", auth.currentUser.uid);
+    const userSnap = await getDoc(userRef);
+
+    if(!userSnap.exists()) return;
+
+    const userData = userSnap.data();
+
+    const lastRead = userData.lastNotificationReadAt || Timestamp.fromMillis(0);
+
+    const snap = await getDocs(
+        query(
+            collection(db, "broadcasts"),
+            orderBy("createdAt", "desc")
+        )
+    );
+
+    let unread = 0;
+
+    snap.forEach(docSnap => {
+
+        const n = docSnap.data();
+
+        if(n.createdAt && n.createdAt.toMillis() > lastRead.toMillis()){
+            unread++;
+        }
+
+    });
+
+    const bellDot = document.getElementById("notifCount");
+    const sidebarDot = document.getElementById("sidebarDot");
+
+    if(unread > 0){
+
+        bellDot.innerText = unread > 9 ? "9+" : unread;
+        bellDot.classList.remove("hidden");
+
+        sidebarDot.classList.remove("hidden");
+
+    }else{
+
+        bellDot.classList.add("hidden");
+
+        sidebarDot.classList.add("hidden");
+
+    }
+
+}
+function listenForBroadcasts(){
+
+    const q = query(
+        collection(db, "broadcasts"),
+        orderBy("createdAt", "desc")
+    );
+
+    onSnapshot(q, () => {
+
+        updateNotifUI();
+
+    });
+
+}
+
+async function markNotificationsRead(){
+
+    localStorage.setItem("nnampNotificationsRead", "true");
+
+}
+async function openNotifications(event){
+
+    event.preventDefault();
+
+    await markNotificationsRead();
+
+    window.location.href = "notifications.html";
+
+}
+window.openNotifications = openNotifications;
+window.markNotificationsRead = markNotificationsRead;
+async function updateStats(){
+
+    const plansSnap = await getDocs(
+        collection(db, "users", auth.currentUser.uid, "investments")
+    );
+
+    let totalInvested = 0;
+
+    plansSnap.forEach(docSnap=>{
+        const plan = docSnap.data();
+        totalInvested += Number(plan.amount || 0);
+    });
+
+    const savings = currentUser.savings || [];
+
+    const totalSavings = savings
+        .filter(s => s.status === "Active")
+        .reduce((sum,s)=>sum + Number(s.amount || 0),0);
+
+    document.getElementById("walletStat").innerText =
+        formatMoney(currentUser.balance);
+
+    document.getElementById("totalInvested").innerText =
+        formatMoney(totalInvested);
+
+    document.getElementById("totalSavings").innerText =
+        formatMoney(totalSavings);
+
+    document.getElementById("totalReferrals").innerText =
+        currentUser.totalReferrals || 0;
+
+}
+
+function buyPlan(name, amount, percent){
+    console.log("Before:", currentUser.balance, typeof currentUser.balance); // DEBUG
+
+    currentUser.balance = parseFloat(currentUser.balance) || 0;
+    currentUser.lockedBonus = parseFloat(currentUser.lockedBonus) || 0;
+
+    let withdrawableBalance = currentUser.balance - currentUser.lockedBonus;
+    if(amount > withdrawableBalance){
+        showAlert('Insufficient Balance ❌', 'Available: ' + formatMoney(withdrawableBalance), 'error');
+        return;
+    }
+
+    // ADDED CONFIRM POPUP
+    showConfirm("Confirm Investment", `Invest ${formatMoney(amount)} in ${name}?`, async function(){
+        const dailyProfit = amount * percent;
+
+await addDoc(
+    collection(db, "users", auth.currentUser.uid, "investments"),
+    {
+        name: name,
+        amount: amount,
+        dailyProfit: dailyProfit,
+        percent: percent,
+        startTime: serverTimestamp(),
+        endTime: Date.now() + (100 * 24 * 60 * 60 * 1000),
+        status: "Active"
+    }
+);
+
+        currentUser.balance = currentUser.balance - amount; // DEDUCT
+
+        console.log("After:", currentUser.balance); // DEBUG
+
+        let isFirstInvestment =!currentUser.hasInvested;
+        if(isFirstInvestment){
+            currentUser.hasInvested = true;
+            currentUser.lockedBonus = 0;
+            if(currentUser.referredBy){
+                let referrerPhone = currentUser.referredBy;
+                let bonus = amount * 0.15;
+                const referrerQuery = await getDocs(
+    collection(db, "users")
+);
+
+for (const refDoc of referrerQuery.docs) {
+
+    const refData = refDoc.data();
+
+    if (refData.phone === referrerPhone) {
+
+        await updateDoc(refDoc.ref, {
+
+            balance: (Number(refData.balance) || 0) + bonus,
+
+            referralBonus:
+                (Number(refData.referralBonus) || 0) + bonus
+
+        });
+
+        break;
+    }
+}
+                const referralRef = collection(
+    db,
+    "users",
+    refDoc.id,
+    "referrals"
+);
+
+await addDoc(referralRef, {
+
+    fullname: currentUser.fullname,
+
+    phone: currentUser.phone,
+
+    earned: bonus,
+
+    status: "Active",
+
+    joined: serverTimestamp()
+
+});
+                addTransaction('Referral Bonus Paid', bonus, 'Approved', `15% bonus for referring ${currentUser.fullname}`);
+                showAlert(`🎉 First Investment!`, `Your ₦1000 bonus is now unlocked.\n${formatMoney(bonus)} referral bonus sent to your referrer.`, "success");
+            }
+        }
+
+        await updateDoc(
+    doc(db, "users", auth.currentUser.uid),
+    {
+        balance: currentUser.balance,
+        lockedBonus: currentUser.lockedBonus || 0,
+        hasInvested: currentUser.hasInvested || false
+    }
+);
+        document.getElementById('balanceAmount').innerText = formatMoney(currentUser.balance);
+        document.getElementById('walletStat').innerText = formatMoney(currentUser.balance);
+        addTransaction('Investment', amount, 'Approved', `Bought ${name}`);
+        updateStats();
+        if(!isFirstInvestment){
+            showAlert("Investment Activated ✅", `${name} activated!\n${formatMoney(dailyProfit)} daily profit`, "success");
+        }
+    });
+}
+
+function initDashboard() {
+    checkMaturedSavings();
+    updateNotifUI();
+    document.getElementById('userName').innerText = currentUser.fullname || 'User';
+    document.getElementById('balanceAmount').innerText = formatMoney(currentUser.balance);
+    updateStats();
+}
+
+
+window.toggleSidebar = toggleSidebar;
+window.toggleBalance = toggleBalance;
+window.logout = logout;
+window.buyPlan = buyPlan;
+window.markNotificationsRead = markNotificationsRead;
+const menuBtn = document.getElementById("menuBtn");
+
+
+
+menuBtn.addEventListener("click", function () {
+
+    toggleSidebar();
+});
+document.getElementById("eyeIcon").addEventListener("click", function () {
+    toggleBalance();
+});
+</script>
+</body>
+</html>

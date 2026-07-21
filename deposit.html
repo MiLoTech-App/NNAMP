@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NNAMP - Deposit</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body{ padding-bottom: 80px; background:#f7f9fc; }
+       .menu-toggle {background: #0d6e2f!important; color: white!important; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px!important; border: none;}
+       .close-sidebar {background: #0d6e2f!important; color: white!important; width: 40px; height: 40px; border-radius: 10px; font-size: 22px!important; font-weight: bold; border: none; position: absolute; top: 15px; right: 15px;}
+       .table-wrapper{overflow-x:auto;}
+       .status-pending{color:#ffc107;font-weight:bold;}
+       .status-approved{color:#198754;font-weight:bold;}
+       .status-rejected{color:#dc3545;font-weight:bold;}
+       .proof-thumb{width:60px; height:60px; object-fit:cover; border-radius:5px; cursor:pointer; border:1px solid #ddd;}
+       .btn-outline{ background:white; color:#0d6e2f; border:2px solid #0d6e2f; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold; width:100%; margin:10px 0; }
+       .proof-section{ display:none; }
+
+        /* CUSTOM POPUP */
+       .custom-alert {position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 99999; animation: popIn 0.3s ease;}
+       .custom-alert-box {background: white; padding: 25px 20px; border-radius: 15px; text-align: center; width: 90%; max-width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); white-space: pre-line; border-top: 4px solid #0d6e2f;}
+       .custom-alert-box.success { border-top: 4px solid #28a745; }
+       .custom-alert-box.error { border-top: 4px solid #dc3545; }
+       .custom-alert-box h3 { margin: 0 0 10px 0; color: #0d6e2f; font-size: 18px; }
+       .custom-alert-box p { margin: 0 0 15px 0; color: #333; font-size: 14px; }
+       .custom-alert-btn {background: #0d6e2f; color: white; border: none; padding: 10px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; width:100%;}
+        @keyframes popIn { from {transform: scale(0.8); opacity:0;} to {transform: scale(1); opacity:1;} }
+        .point-container{
+    width:100%;
+    text-align:center;
+    margin:10px 0;
+}
+
+.point-down{
+    display:inline-block;
+    font-size:32px;
+    animation: pointGlow 0.7s ease-in-out infinite;
+}
+
+@keyframes pointGlow{
+    0%{
+        transform:translateY(0);
+        filter:drop-shadow(0 0 0px gold);
+    }
+
+    25%{
+        transform:translateY(6px);
+        filter:drop-shadow(0 0 6px gold);
+    }
+
+    50%{
+        transform:translateY(12px);
+        filter:drop-shadow(0 0 12px gold);
+    }
+
+    75%{
+        transform:translateY(6px);
+        filter:drop-shadow(0 0 6px gold);
+    }
+
+    100%{
+        transform:translateY(0);
+        filter:drop-shadow(0 0 0px gold);
+    }
+}
+    </style>
+</head>
+<body>
+<div class="dashboard-layout">
+    <aside class="sidebar">
+        <button class="close-sidebar" onclick="toggleSidebar()">✕</button>
+        <div class="logo">NNAMP🌱🇳🇬<span>.</span><p>Grow - Invest - Prosper</p></div>
+        <nav>
+            <a href="dashboard.html">🏠 Dashboard</a>
+            <a href="investments.html">📊 Investments</a>
+            <a href="savings.html">💰 Savings</a>
+            <a href="deposit.html" class="active">⬇️ Deposit</a>
+            <a href="withdraw.html">⬆️ Withdraw</a>
+            <a href="transactions.html">📄 Transactions</a>
+            <a href="referrals.html">👥 Referrals</a>
+            <a href="daily-bonus.html">🎁 Daily Bonus</a>
+            <a href="profile.html">👤 Profile</a>
+            <a href="settings.html">⚙️ Settings</a>
+            <a href="support.html">🎧 Support Center</a>
+            <a href="#" onclick="logout()" style="color:#dc3545;">🚪 Logout</a>
+        </nav>
+        <div class="wallet-box">
+            <p>Wallet Balance</p>
+            <h3 id="sidebarBalance">₦0.00 <span>👁️</span></h3>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header style="display:flex; justify-content:space-between; align-items:center; padding:15px 0;">
+            <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+            <h2 style="color:#0d6e2f; margin:0;">⬇️ Fund Your Wallet</h2>
+            <div></div>
+        </header>
+        <p>Minimum Deposit: ₦3,000 to ₦20,000,000. Transfer and click "I Have Paid".</p>
+
+        <div class="card" style="max-width:600px; margin:auto;">
+            <h4>Bank Transfer</h4>
+            <p>Transfer to the account below.</p>
+            <div class="point-container">
+    <span class="point-down">👇</span>
+</div>
+  
+           <div style="background:#f8f9fa; padding:15px; border-radius:10px; margin:15px 0; border-left:4px solid #0d6e2f;">
+                <p><b>Bank Name:</b> Monie-Point</p>
+                <p><b>Account Name:</b> NNAMP INVESTMENT LIMITED</p>
+                <p><b>Account Number:</b> 6845623340</p>
+            </div>
+
+            <label><b>Enter Amount</b></label>
+            <input type="number" id="depositAmount" placeholder="Minimum ₦3,000 ~ ₦20,000,000" style="width:100%; padding:12px; margin:10px 0; border:1px solid #ddd; border-radius:8px;">
+
+            <button class="btn-outline" onclick="toggleProof()">📎 Add Proof of Payment (Optional)</button>
+
+            <div class="proof-section" id="proofSection">
+                <label><b>Upload Proof of Payment</b></label>
+                <input type="file" id="proof" accept="image/*" style="width:100%; padding:10px; margin:10px 0; border:1px solid #ddd; border-radius:8px;">
+            </div>
+
+            <button class="btn" onclick="submitDeposit()" style="width:100%; background:#0d6e2f;">I Have Paid ✅</button>
+
+            <p style="font-size:12px; color:#888; margin-top:10px;">Note: Deposits are automatically approved by the system within 1-5 minutes.</p>
+        </div>
+
+        <div class="card">
+            <h4>Deposit History</h4>
+            <div class="table-wrapper">
+                <table id="depositTable" style="width:100%; border-collapse:collapse;">
+                    <thead>
+                        <tr style="background:#f8f9fa;">
+                            <th style="padding:10px; text-align:left;">Date</th>
+                            <th style="padding:10px; text-align:left;">Amount</th>
+                            <th style="padding:10px; text-align:left;">Proof</th>
+                            <th style="padding:10px; text-align:left;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="depositBody">
+                        <tr><td colspan="4" style="padding:15px; text-align:center; color:#888;">No deposits yet</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script type="module">
+  import { auth, db } from "./firebase.js";
+
+import {
+    onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+
+import {
+    doc,
+    getDoc,
+    collection,
+    addDoc,
+    updateDoc,
+    getDocs,
+    query,
+    where
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+let currentUser = null;
+
+onAuthStateChanged(auth, async (user) => {
+
+    if (!user) {
+        window.location.href = "login.html";
+        return;
+    }
+
+    const snap = await getDoc(
+        doc(db, "users", user.uid)
+    );
+
+    if (!snap.exists()) {
+
+        showAlert(
+            "Error",
+            "User not found.",
+            "error"
+        );
+        return;
+    }
+
+    currentUser = {
+        uid: user.uid,
+        ...snap.data()
+    };
+    document.getElementById("sidebarBalance").innerText =
+    "₦" + (currentUser.balance || 0).toLocaleString() + " 👁️";
+
+loadDepositHistory();
+
+});
+
+// POPUP FUNCTION
+function showAlert(title, message, type = "info") {
+    let alertDiv = document.createElement("div");
+    alertDiv.className = "custom-alert";
+    alertDiv.innerHTML = `
+        <div class="custom-alert-box ${type}">
+            <h3>${title}</h3>
+            <p>${message}</p>
+            <button class="custom-alert-btn" onclick="this.closest('.custom-alert').remove()">OK</button>
+        </div>
+    `;
+    document.body.appendChild(alertDiv);
+    setTimeout(() => { if(document.body.contains(alertDiv)){ alertDiv.remove(); } }, 2500);
+}
+
+function toggleSidebar(){ document.querySelector('.sidebar').classList.toggle('active'); }
+
+function toggleProof(){
+    const proof = document.getElementById('proofSection');
+    proof.style.display = proof.style.display === 'block'? 'none' : 'block';
+}
+
+function logout(){
+    showAlert("Logged Out 👋", "You have been logged out successfully", "info");
+    setTimeout(() => {
+        localStorage.removeItem('nnampCurrentUser');
+        window.location.href = "login.html";
+    }, 1500);
+}
+
+
+
+
+
+
+
+
+
+async function addNotification(title, msg) {
+    await addDoc(collection(db, "notifications"), {
+        userId: currentUser.uid,
+        title: title,
+        msg: msg,
+        read: false,
+        date: new Date().toLocaleString(),
+        createdAt: Date.now()
+    });
+}
+
+async function loadDepositHistory(){
+    const q = query(
+    collection(db, "deposits"),
+    where("userId", "==", currentUser.uid)
+);
+
+const snapshot = await getDocs(q);
+
+let deposits = [];
+
+snapshot.forEach((docSnap) => {
+    deposits.push({
+    docId: docSnap.id,
+    ...docSnap.data()
+});
+});
+    let tbody = document.getElementById('depositBody');
+
+    if(deposits.length === 0){
+        tbody.innerHTML = '<tr><td colspan="4" style="padding:15px; text-align:center; color:#888;">No deposits yet</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = '';
+    deposits.sort((a, b) => b.createdAt - a.createdAt);
+
+deposits.forEach(t => {
+        let className = t.status === 'Approved'? 'status-approved' : t.status === 'Pending'? 'status-pending' : 'status-rejected';
+        let proofImg = t.proofUrl
+    ? `<img src="${t.proofUrl}" class="proof-thumb" onclick="window.open('${t.proofUrl}')">`
+    : `<button onclick="uploadProof('${t.id || t.docId}')" style="padding:6px 12px;background:#0d6e2f;color:#fff;border:none;border-radius:6px;cursor:pointer;">📎 Upload Proof</button>`;
+        tbody.innerHTML += `
+            <tr>
+                <td style="padding:10px;">${t.date}</td>
+                <td style="padding:10px; color:#198754; font-weight:bold;">+₦${t.amount.toLocaleString()}</td>
+                <td style="padding:10px;">${proofImg}</td>
+                <td style="padding:10px;" class="${className}">${t.status}</td>
+            </tr>
+        `;
+    });
+}
+
+async function submitDeposit() {
+    let amount = parseFloat(document.getElementById('depositAmount').value);
+    let proofFile = document.getElementById('proof').files[0];
+
+    if(!amount || amount < 3000) {
+        showAlert("Error ❌", "Minimum deposit is ₦3,000", "error");
+        return;
+    }
+
+    let reader = new FileReader();
+    reader.onload = async function(e) {
+
+
+    let proofBase64 = proofFile ? e.target.result : null;
+
+    try {
+
+await addDoc(collection(db, "deposits"), {
+
+
+        userId: currentUser.uid,
+        phone: currentUser.phone,
+        fullname: currentUser.fullname,
+
+        amount: amount,
+        status: "Pending",
+
+        proof: proofBase64,
+
+        date: new Date().toLocaleString(),
+        createdAt: Date.now()
+
+    });
+    // Save deposit transaction to user's history
+const userRef = doc(db, "users", currentUser.uid);
+
+const userSnap = await getDoc(userRef);
+
+const userData = userSnap.data();
+
+const transactions = userData.transactions || [];
+
+transactions.push({
+    id: Date.now(),
+    type: "Deposit",
+    amount: amount,
+    status: "Pending",
+    date: new Date().toLocaleString(),
+    note: "Wallet Deposit"
+});
+
+await updateDoc(userRef, {
+    transactions: transactions
+});
+
+    await addNotification(
+    "Deposit Submitted",
+    `₦${amount.toLocaleString()} deposit is pending admin approval.`
+);
+
+
+
+
+    showAlert(
+        "Submitted ⏳",
+        `Deposit Request Submitted!\n\n₦${amount.toLocaleString()}\n\nStatus: Pending Admin Approval`,
+        "info"
+    );
+
+    document.getElementById('depositAmount').value = '';
+    document.getElementById('proof').value = '';
+    document.getElementById('proofSection').style.display = 'none';
+} catch (error) {
+    console.error(error);
+    showAlert(
+        "Deposit Error ❌",
+        error.message,
+        "error"
+    );
+}
+}
+
+    if(proofFile){
+        reader.readAsDataURL(proofFile);
+    } else {
+        reader.onload(); // run without proof
+    }
+}
+async function uploadProof(docId) {
+
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+
+    input.onchange = async function () {
+
+        const file = input.files[0];
+
+        if (!file) return;
+
+        showAlert(
+            "Uploading ⏳",
+            "Uploading proof of payment...",
+            "info"
+        );
+
+        try {
+
+            let formData = new FormData();
+            formData.append("file", file);
+            formData.append("upload_preset", "nnamp_proof");
+
+            const response = await fetch(
+                "https://api.cloudinary.com/v1_1/vzl6vwd6/image/upload",
+                {
+                    method: "POST",
+                    body: formData
+                }
+            );
+
+            const data = await response.json();
+
+            if(!data.secure_url){
+                throw new Error("Upload failed");
+            }
+
+            await updateDoc(
+                doc(db, "deposits", docId),
+                {
+                    proofUrl: data.secure_url
+                }
+            );
+
+            showAlert(
+                "Success ✅",
+                "Proof uploaded successfully",
+                "success"
+            );
+
+            loadDepositHistory();
+
+        } catch(error) {
+
+            console.error(error);
+
+            showAlert(
+                "Upload Error ❌",
+                error.message,
+                "error"
+            );
+
+        }
+
+    };
+
+    input.click();
+
+}
+
+// CHECK EVERY 3 SECONDS IF ADMIN APPROVED
+setInterval(async function () {
+
+    const q = query(
+        collection(db, "deposits"),
+        where("userId", "==", currentUser.uid)
+    );
+
+    const snapshot = await getDocs(q);
+
+    snapshot.forEach(async (docSnap) => {
+
+        const deposit = docSnap.data();
+
+        if (deposit.status === "Approved" && !deposit.credited) {
+
+            currentUser.balance += deposit.amount;
+
+
+
+            await updateDoc(doc(db, "deposits", docSnap.id), {
+                credited: true
+            });
+
+            await addDoc(collection(db, "notifications"), {
+    userId: currentUser.uid,
+    title: "Deposit Approved ✅",
+    msg: `₦${deposit.amount.toLocaleString()} has been credited to your wallet.`,
+    read: false,
+    date: new Date().toLocaleString(),
+    createdAt: Date.now()
+});
+
+            document.getElementById("sidebarBalance").innerText =
+                "₦" + currentUser.balance.toLocaleString() + " 👁️";
+
+            showAlert(
+                "Success ✅",
+                `₦${deposit.amount.toLocaleString()} has been credited to your wallet!`,
+                "success"
+            );
+
+            loadDepositHistory();
+        }
+
+    });
+
+}, 3000);
+
+document.addEventListener('DOMContentLoaded', loadDepositHistory);
+window.toggleSidebar = toggleSidebar;
+window.toggleProof = toggleProof;
+window.submitDeposit = submitDeposit;
+window.logout = logout;
+window.uploadProof = uploadProof;
+</script>
+
+<script src="script.js"></script>
+</body>
+</html>

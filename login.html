@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NNAMP - Login</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="login-box">
+        <div class="logo">NNAMP<span>🇳🇬</span></div>
+        <h2>Welcome Back</h2>
+        
+        <form id="loginForm">
+            <input type="tel" class="input" id="phone" placeholder="Phone Number" required>
+            
+            <div class="input-group">
+                <input type="password" class="input" id="login-password" placeholder="Password" required>
+                <span class="toggle-password" onclick="togglePassword('login-password')">👁️</span>
+            </div>
+            
+            <button type="submit" class="btn" style="width:100%; margin-top:10px; background:#0d6e2f;">Login</button>
+        </form>
+
+        <p style="margin-top:20px; color:var(--text-secondary);">
+            Don't have an account? <a href="signup.html" style="color:#0d6e2f; font-weight:bold;">Sign Up</a>
+        </p>
+        <p style="margin-top:10px; text-align:center;">
+            <a href="admin-login.html" style="color:gray; font-size:12px;">Admin Login</a>
+        </p>
+    </div>
+
+<script type="module">
+  import { auth, db } from "./firebase.js";
+
+import {
+    signInWithEmailAndPassword,
+    signOut
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+
+import {
+    doc,
+    getDoc
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+console.log("Login page loaded");
+// GLOBAL CUSTOM ALERT - ADD THIS TO ALL PAGES
+function showAlert(title, message, type = "info") {
+    let alertDiv = document.createElement("div");
+    alertDiv.className = "custom-alert";
+    alertDiv.innerHTML = `
+        <div class="custom-alert-box ${type}">
+            <h3>${title}</h3>
+            <p>${message}</p>
+            <button class="custom-alert-btn" onclick="this.closest('.custom-alert').remove()">OK</button>
+        </div>
+    `;
+    document.body.appendChild(alertDiv);
+}
+
+function togglePassword(id) {
+    const input = document.getElementById(id);
+    input.type = input.type === "password" ? "text" : "password";
+}
+window.togglePassword = togglePassword;
+
+document.getElementById('loginForm').addEventListener('submit', async function(e){
+
+    e.preventDefault();
+
+    const phone = document.getElementById('phone').value.trim();
+    const password = document.getElementById('login-password').value;
+
+    // Keep your admin login
+    if(phone === "08000000" && password === "admin123"){
+
+        localStorage.setItem("nnamp_is_admin", "true");
+
+        showAlert(
+            "Admin Login ✅",
+            "Admin Login Successful!",
+            "success"
+        );
+
+        setTimeout(()=>{
+            window.location.href = "admin.html";
+        },2000);
+
+        return;
+    }
+
+    // Convert phone number to hidden email
+    const email = phone + "@nnamp.app";
+
+    try{
+
+        // Login with Firebase Authentication
+        const userCredential = await signInWithEmailAndPassword(
+            auth,
+            email,
+            password
+        );
+
+        const uid = userCredential.user.uid;
+
+        // Load user profile from Firestore
+        const userSnap = await getDoc(doc(db, "users", uid));
+
+        if(!userSnap.exists()){
+
+            showAlert(
+                "Login Failed",
+                "User profile not found.",
+                "error"
+            );
+
+            return;
+        }
+
+        const user = userSnap.data();
+
+
+
+        showAlert(
+            "Welcome " + user.fullname + " 🎉",
+            "Login Successful!",
+            "success"
+        );
+
+        setTimeout(()=>{
+            window.location.href = "dashboard.html";
+        },2000);
+
+    }catch(error){
+
+        console.error(error);
+
+        showAlert(
+            "Login Failed ❌",
+            "Incorrect phone number or password.",
+            "error"
+        );
+
+    }
+
+});
+</script>
+
+</body>
+</html>

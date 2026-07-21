@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NNAMP - Withdraw</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body{ padding-bottom: 80px; background:#f7f9fc; }
+  .menu-toggle {background: #0d6e2f!important; color: white!important; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px!important; border: none;}
+  .close-sidebar {background: #0d6e2f!important; color: white!important; width: 40px; height: 40px; border-radius: 10px; font-size: 22px!important; font-weight: bold; border: none; position: absolute; top: 15px; right: 15px;}
+  .table-wrapper{ width:100%; overflow-x: auto; }
+        table{ width:100%; border-collapse:collapse; min-width:500px; }
+        th,td{ padding:10px; text-align:left; border-bottom:1px solid #eee; font-size:13px; }
+        th{ background:#f8f9fa; }
+  .status-pending{color:#ffc107;font-weight:bold;}
+  .status-approved{color:#198754;font-weight:bold;}
+  .status-rejected{color:#dc3545;font-weight:bold;}
+
+    /* CUSTOM ALERT POPUP - ADDED */
+  .custom-alert {position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 99999; animation: popIn 0.3s ease;}
+  .custom-alert-box {background: white; padding: 25px 20px; border-radius: 15px; text-align: center; width: 90%; max-width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); white-space: pre-line;}
+  .custom-alert-box.success { border-top: 4px solid #28a745; }
+  .custom-alert-box.error { border-top: 4px solid #dc3545; }
+  .custom-alert-box.info { border-top: 4px solid #0d6e2f; }
+  .custom-alert-box h3 { margin: 0 0 10px 0; color: #0d6e2f; font-size: 18px; }
+  .custom-alert-box p { margin: 0 0 15px 0; color: #333; font-size: 14px; }
+  .custom-alert-btn {background: #0d6e2f; color: white; border: none; padding: 10px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; width:100%;}
+    @keyframes popIn { from {transform: scale(0.8); opacity:0;} to {transform: scale(1); opacity:1;} }
+    </style>
+</head>
+<body>
+<div class="dashboard-layout">
+    <aside class="sidebar">
+        <button class="close-sidebar" onclick="toggleSidebar()">✕</button>
+        <div class="logo">NNAMP🌱🇳🇬<span>.</span><p>Grow - Invest - Prosper</p></div>
+        <nav>
+            <a href="dashboard.html">🏠 Dashboard</a>
+            <a href="investments.html">📊 Investments</a>
+            <a href="savings.html">💰 Savings</a>
+            <a href="deposit.html">⬇️ Deposit</a>
+            <a href="withdraw.html" class="active">⬆️ Withdraw</a>
+            <a href="transactions.html">📄 Transactions</a>
+            <a href="referrals.html">👥 Referrals</a>
+            <a href="daily-bonus.html">🎁 Daily Bonus</a>
+            <a href="profile.html">👤 Profile</a>
+            <a href="settings.html">⚙️ Settings</a>
+            <a href="#" onclick="logout()" style="color:#dc3545;">🚪 Logout</a>
+        </nav>
+        <div class="wallet-box">
+            <p>Wallet Balance</p>
+            <h3 id="sidebarBalance">₦0.00 <span>👁️</span></h3>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header style="display:flex; justify-content:space-between; align-items:center; padding:15px 0;">
+            <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+            <h2 style="color:#0d6e2f; margin:0;">⬆️ Withdraw Funds</h2>
+            <div></div>
+        </header>
+        <p>Minimum Withdrawal: ₦1,000. 7% Withdrawal Fee Applies.</p>
+
+        <div id="noBankAlert" style="background:#f8d7da; padding:15px; border-radius:10px; margin-bottom:20px; display:none; border-left:4px solid #dc3545;">
+            <p>❌ You have not added bank details. <a href="settings.html" style="color:#0d6e2f; font-weight:bold;">Click here to add in Settings</a></p>
+        </div>
+
+        <div class="card" style="max-width:600px; margin:auto;" id="withdrawForm">
+            <h4>Your Bank Details</h4>
+            <div id="bankDetails" style="background:#e8f5e9; padding:15px; border-radius:10px; margin:15px 0;">
+                <p><b>Bank:</b> <span id="bankName">-</span></p>
+                <p><b>Account No:</b> <span id="accountNo">-</span></p>
+                <p><b>Account Name:</b> <span id="accountName">-</span></p>
+                <p style="font-size:12px; color:#888;">To change this, go to <a href="settings.html">Settings</a></p>
+            </div>
+
+            <label><b>Enter Amount</b></label>
+            <input type="number" id="withdrawAmount" placeholder="Minimum ₦1,000 ~ ₦20,000,000" onkeyup="calculateFee()" style="width:100%; padding:12px; margin:10px 0; border:1px solid #ddd; border-radius:8px;">
+
+            <div id="feeCalc" style="background:#fff3cd; padding:10px; border-radius:8px; display:none; margin:10px 0;">
+                <p><b>Withdrawal Amount:</b> <span id="reqAmount">₦0</span></p>
+                <p><b>7% Fee:</b> <span id="fee">₦0</span></p>
+                <p><b>You Will Receive:</b> <span id="netAmount">₦0</span></p>
+            </div>
+
+            <button class="btn" id="withdrawBtn" onclick="submitWithdrawal()" style="width:100%; background:#dc3545;">Request Withdrawal</button>
+            <p style="font-size:12px; color:#888; margin-top:10px;">Note: Withdrawals are processed and credited automatically by the system within 10-30 minutes.</p>
+        </div>
+
+        <div class="card">
+            <h4>Withdrawal History</h4>
+            <div class="table-wrapper">
+                <table id="withdrawTable">
+                    <thead>
+                        <tr><th>Date</th><th>Amount</th><th>Fee</th><th>Net</th><th>Status</th></tr>
+                    </thead>
+                    <tbody id="withdrawBody">
+                        <tr><td colspan="5" style="padding:15px; text-align:center; color:#888;">No withdrawals yet</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script type="module">
+  import { auth, db } from "./firebase.js";
+
+import {
+    collection,
+    addDoc,
+    doc,
+    getDoc,
+    getDocs,
+    updateDoc,
+    query,
+    where,
+    serverTimestamp
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+import {
+    onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+  
+function getUsers() { return JSON.parse(localStorage.getItem('nnampUsers')) || []; }
+function saveUsers(users) { localStorage.setItem('nnampUsers', JSON.stringify(users)); }
+
+let currentUser = null;
+let currentUserDocId = null;
+
+onAuthStateChanged(auth, async (user) => {
+
+    if (!user) {
+        window.location.href = "login.html";
+        return;
+    }
+
+    currentUserDocId = user.uid;
+
+    const userSnap = await getDoc(doc(db, "users", user.uid));
+
+    if (!userSnap.exists()) {
+        showAlert("Error ❌", "User profile not found.", "error");
+        return;
+    }
+
+    currentUser = userSnap.data();
+
+    startWithdrawPage();
+
+});
+
+async function startWithdrawPage() {
+  // AUTO UNLOCK FOR OLD USERS WHO ALREADY HAVE INVESTMENTS
+if(!currentUser.hasInvested && currentUser.investments && currentUser.investments.length > 0){
+    currentUser.hasInvested = true;
+    await saveUser(currentUser);
+}
+
+// BLOCK IF NO INVESTMENT YET
+if(!currentUser.hasInvested){
+    showAlert('Bonus Locked 🔒', 'You need to unlock your bonus by making your first investment', 'error');
+    setTimeout(() => window.location.href = 'investments.html', 2000);
+}
+
+// Update sidebar
+document.getElementById('sidebarBalance').innerText =
+'₦' + currentUser.balance.toLocaleString() + ' 👁️';
+
+// Load bank details
+document.getElementById('bankName').innerText = currentUser.bank || 'Not Set';
+document.getElementById('accountNo').innerText = currentUser.accountNo || 'Not Set';
+document.getElementById('accountName').innerText = currentUser.accountName || 'Not Set';
+
+if(!currentUser.bank || !currentUser.accountNo){
+    document.getElementById('noBankAlert').style.display = 'block';
+    document.getElementById('withdrawForm').style.opacity = '0.5';
+    document.getElementById('withdrawBtn').disabled = true;
+}
+
+loadWithdrawHistory();
+}
+
+async function saveUser(user){
+
+    await updateDoc(
+        doc(db, "users", currentUserDocId),
+        user
+    );
+
+}
+  
+
+
+function toggleSidebar(){ document.querySelector('.sidebar').classList.toggle('active'); }
+function logout(){
+    showAlert("Logged Out 👋", "You have been logged out successfully", "info");
+    setTimeout(() => {
+        localStorage.removeItem('nnampCurrentUser');
+        window.location.href = "login.html";
+    }, 1500);
+}
+
+
+
+function calculateFee() {
+    let amount = document.getElementById('withdrawAmount').value;
+    if(amount > 0) {
+        let fee = amount * 0.07;
+        let net = amount - fee;
+        document.getElementById('feeCalc').style.display = 'block';
+        document.getElementById('reqAmount').innerText = '₦' + Number(amount).toLocaleString();
+        document.getElementById('fee').innerText = '₦' + fee.toLocaleString();
+        document.getElementById('netAmount').innerText = '₦' + net.toLocaleString();
+    } else {
+        document.getElementById('feeCalc').style.display = 'none';
+    }
+}
+
+async function loadWithdrawHistory(){
+    const withdrawalsSnap = await getDocs(
+    query(
+        collection(db, "withdrawals"),
+        where("userId", "==", currentUserDocId)
+    )
+);
+
+let tx = [];
+
+withdrawalsSnap.forEach((docSnap) => {
+    tx.push(docSnap.data());
+});
+    let withdrawals = tx;
+    let tbody = document.getElementById('withdrawBody');
+
+    if(withdrawals.length === 0){
+        tbody.innerHTML = '<tr><td colspan="5" style="padding:15px; text-align:center; color:#888;">No withdrawals yet</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = '';
+    withdrawals.reverse().forEach(t => {
+        let fee = t.fee || (t.amount * 0.07);
+let net = t.netAmount || (t.amount - fee);
+        
+        let className = t.status === 'Approved'? 'status-approved' : t.status === 'Pending'? 'status-pending' : 'status-rejected';
+        tbody.innerHTML += `
+            <tr>
+                <td>${
+    t.createdAt
+        ? t.createdAt.toDate().toLocaleString()
+        : "-"
+}</td>
+                <td style="color:#dc3545; font-weight:bold;">-₦${t.amount.toLocaleString()}</td>
+                <td>₦${fee.toLocaleString()}</td>
+                <td>₦${net.toLocaleString()}</td>
+                <td class="${className}">${t.status}</td>
+            </tr>
+        `;
+    });
+}
+
+// ========== CUSTOM ALERT FUNCTION - ADDED ==========
+function showAlert(title, message, type = "info") {
+    let alertDiv = document.createElement("div");
+    alertDiv.className = "custom-alert";
+    alertDiv.innerHTML = `
+        <div class="custom-alert-box ${type}">
+            <h3>${title}</h3>
+            <p>${message}</p>
+            <button class="custom-alert-btn" onclick="this.closest('.custom-alert').remove()">OK</button>
+        </div>
+    `;
+    document.body.appendChild(alertDiv);
+    // Auto close after 3 seconds
+    setTimeout(() => { if(document.body.contains(alertDiv)){ alertDiv.remove(); } }, 3000);
+}
+// ========== END CUSTOM ALERT ==========
+
+async function submitWithdrawal() {
+    let amount = parseFloat(document.getElementById('withdrawAmount').value);
+
+    if(!amount || amount < 1000) {
+        showAlert('Error ❌', 'Minimum withdrawal is ₦1,000', 'error');
+        return;
+    }
+    if(amount > currentUser.balance){
+        showAlert('Error ❌', 'Insufficient Balance. Your balance: ₦' + currentUser.balance.toLocaleString(), 'error');
+        return;
+    }
+    if(!currentUser.bank){
+        showAlert('Info ℹ️', 'Please add bank details in Settings first', 'info');
+        return;
+    }
+
+    // DEDUCT BALANCE
+    currentUser.balance -= amount;
+    await saveUser(currentUser);
+
+    // CREATE PENDING WITHDRAWAL IN FIRESTORE
+await addDoc(collection(db, "withdrawals"), {
+    userId: currentUserDocId,
+    phone: currentUser.phone,
+    fullname: currentUser.fullname,
+    amount: amount,
+    fee: amount * 0.07,
+    netAmount: amount - (amount * 0.07),
+    bank: currentUser.bank,
+    accountNo: currentUser.accountNo,
+    accountName: currentUser.accountName,
+    status: "Pending",
+    createdAt: serverTimestamp()
+});
+// Save withdrawal to transaction history
+const userRef = doc(db, "users", currentUserDocId);
+
+const userSnap = await getDoc(userRef);
+
+const userData = userSnap.data();
+
+const transactions = userData.transactions || [];
+
+transactions.push({
+    id: Date.now(),
+    type: "Withdrawal",
+    amount: amount,
+    status: "Pending",
+    date: new Date().toLocaleString(),
+    note: "Wallet Withdrawal"
+});
+
+await updateDoc(userRef, {
+    transactions: transactions
+});
+    // UPDATE UI
+    document.getElementById('sidebarBalance').innerText = '₦' + currentUser.balance.toLocaleString() + ' 👁️';
+    loadWithdrawHistory();
+
+    let fee = amount * 0.07;
+    let net = amount - fee;
+    showAlert('Withdrawal Submitted ⏳',
+    'Requested: ₦' + amount.toLocaleString() +
+    '\nFee 7%: ₦' + fee.toLocaleString() +
+    '\nYou will receive: ₦' + net.toLocaleString() +
+    '\n\nStatus: Pending',
+    'info');
+
+    document.getElementById('withdrawAmount').value = '';
+    document.getElementById('feeCalc').style.display = 'none';
+}
+console.log("Reached end of script");
+
+window.submitWithdrawal = submitWithdrawal;
+window.toggleSidebar = toggleSidebar;
+window.logout = logout;
+window.calculateFee = calculateFee;
+window.showAlert = showAlert;
+window.submitWithdrawal = submitWithdrawal;
+window.toggleSidebar = toggleSidebar;
+window.logout = logout;
+window.calculateFee = calculateFee;
+window.showAlert = showAlert;
+</script>
+</body>
+</html>

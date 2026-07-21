@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NNAMP - Grow • Invest • Prosper</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: #f7f9fc; color: #333; }
+        
+        header {
+            background: white;
+            padding: 12px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .logo { font-size: 22px; font-weight: bold; color: #0d6e2f; }
+        .logo span { color: #198754; }
+        .nav-btns a {
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            margin-left: 8px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .btn-login { color: #0d6e2f; border: 2px solid #0d6e2f; }
+        .btn-signup { background: #0d6e2f; color: white; }
+
+        .bonus-banner {
+            background: linear-gradient(90deg, #ff6b00, #ffaa00);
+            color: white;
+            text-align: center;
+            padding: 8px;
+            font-weight: bold;
+            font-size: 13px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #0d6e2f, #198754);
+            color: white;
+            padding: 35px 5%;
+            text-align: center;
+        }
+        .hero h1 { font-size: 28px; margin-bottom: 10px; }
+        .hero .bonus-tag {
+            background: rgba(255,255,255,0.2);
+            display: inline-block;
+            padding: 5px 14px;
+            border-radius: 50px;
+            font-size: 13px;
+            margin-bottom: 12px;
+            border: 2px dashed white;
+        }
+        .hero p { font-size: 15px; opacity: 0.9; margin-bottom: 20px; }
+        .hero .btn {
+            background: #ffaa00;
+            color: #0d6e2f;
+            padding: 11px 28px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 15px;
+            display: inline-block;
+            box-shadow: 0 4px 12px rgba(255,170,0,0.4);
+        }
+
+        .about {
+            padding: 25px 5% 30px 5%; /* REDUCED: was 40px top 100px bottom */
+            background: white;
+            text-align: center;
+            min-height: auto; /* REMOVED 500px so it can shrink */
+        }
+        .about h2 {
+            font-size: 28px; /* SMALLER */
+            color: #0d6e2f;
+            margin-bottom: 8px;
+        }
+        .about .subtitle {
+            font-size: 15px; /* SMALLER */
+            color: #198754; 
+            font-weight: 700;
+            margin-bottom: 15px; /* SMALLER */
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .about p {
+            font-size: 15px; /* SMALLER */
+            color: #555;
+            max-width: 850px;
+            margin: 0 auto;
+            line-height: 1.7; /* SMALLER */
+        }
+
+        /* BIG BOUNCING ARROW - NOW VISIBLE */
+        .scroll-arrow {
+            font-size: 45px; /* SLIGHTLY SMALLER */
+            color: #0d6e2f;
+            margin-top: 20px; /* PUSHED UP: was 40px */
+            animation: bounce 2s infinite;
+            cursor: pointer;
+        }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-15px); }
+            60% { transform: translateY(-8px); }
+        }
+
+        .features {
+            padding: 60px 5%;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            background: #f7f9fc;
+        }
+        .feature-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .feature-card div { font-size: 40px; margin-bottom: 10px; }
+        .feature-card h3 { color: #0d6e2f; margin-bottom: 10px; }
+
+        footer {
+            background: #0d6e2f;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .hero { padding: 30px 5%; }
+            .hero h1 { font-size: 22px; }
+            .about { padding: 20px 5% 25px 5%; min-height: auto; } /* MOBILE SMALLER */
+            .about h2 { font-size: 24px; }
+            .about .subtitle { font-size: 13px; }
+            .about p { font-size: 14px; }
+            .scroll-arrow { font-size: 35px; margin-top: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bonus-banner">
+        🎁Sign Up Now & Get ₦1,000 Instant Bonus!🎁
+    </div>
+
+    <header>
+        <div class="logo">NNAMP<span>🇳🇬</span></div>
+        <div class="nav-btns">
+            <a href="login.html" class="btn-login">Login</a>
+            <a href="signup.html" class="btn-signup">Get ₦1,000 Free</a>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="bonus-tag">🎉 Welcome Bonus: ₦1,000 Instantly</div>
+        <h1>Grow • Invest • Prosper</h1>
+        <p>Start with ₦3,000 • Earn 7% Daily Returns</p>
+        <a href="signup.html" class="btn">Claim ₦1,000 Bonus</a>
+    </section>
+
+    <section class="about">
+        <h2>About NNAMP</h2>
+        <p class="subtitle">NIGERIAN NATIONAL AGRICULTURAL MARKETING PRODUCTS</p>
+        
+        <p>
+            <!-- WRITE YOUR NNAMP STORY HERE -->
+            Welcome to NNAMP - Nigeria's Most Trusted Investment Platform. Launched and Approved by the Nigeria Minister of Agriculture in 2025.
+            
+            At NNAMP, Money invested are distributed to Nigeria Top Farmers & Livestock rearers while they trade and bring a Massive Profit in return. We help you Grow your money, Invest wisely, and Prosper together.
+            With as low as ₦3,000 you can start earning 7% daily returns...
+            
+        </p>
+        
+        <!-- BIG DOWN ARROW - NOW VISIBLE ON LOAD -->
+        <div class="scroll-arrow" onclick="document.querySelector('.features').scrollIntoView({behavior: 'smooth'})">
+            ⬇️
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="feature-card"><div>🎁</div><h3>₦1,000 Free Bonus</h3><p>Get credited instantly when you sign up</p></div>
+        <div class="feature-card"><div>📈</div><h3>7% Daily Returns</h3><p>Earn profit every 24 hours</p></div>
+        <div class="feature-card"><div>💰</div><h3>Instant Withdrawal</h3><p>Withdraw your earnings anytime</p></div>
+        <div class="feature-card"><div>👥</div><h3>Refer & Earn</h3><p>Get Massive rewards when you refer friends</p></div>
+    </section>
+
+    <footer><p>© 2025 NNAMP. All Rights Reserved. Grow • Invest • Prosper</p></footer>
+
+</body>
+</html>

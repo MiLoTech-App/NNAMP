@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NNAMP Admin</title>
+<style>
+*{box-sizing:border-box;}
+body{background:#0f0f1e;color:#fff;font-family:Arial;margin:0;}
+.sidebar{background:#1a1a2e;padding:10px;}
+.sidebar h2{margin:0 0 10px 0;font-size:18px;text-align:center;}
+.sidebar a{display:block;color:#fff;padding:10px;text-decoration:none;border-bottom:1px solid #333;border-radius:5px;margin-bottom:3px;}
+.sidebar a.active{background:#007bff;}
+.main-content{padding:15px;}
+.card{background:#1a1a2e;padding:15px;border-radius:10px;margin-bottom:15px;overflow-x:auto;}
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+.table-wrapper{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:700px;}
+th,td{padding:8px;border-bottom:1px solid #333;text-align:left;}
+.btn{background:#007bff;color:#fff;border:none;padding:6px 10px;border-radius:5px;margin:2px;font-size:12px;cursor:pointer;}
+.btn.green{background:green;}
+.btn.red{background:#dc3545;}
+input,textarea{width:100%;padding:10px;margin:5px 0;background:#2a2a3e;color:#fff;border:1px solid #444;border-radius:5px;}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.proof-thumb{width:60px; height:60px; object-fit:cover; border-radius:5px; cursor:pointer; border:1px solid #444;}
+.status-pending{color:#ffc107;font-weight:bold;}
+.status-approved{color:#198754;font-weight:bold;}
+.status-rejected{color:#dc3545;font-weight:bold;}
+
+ /* CUSTOM POPUP - ADDED */
+.custom-alert {position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 99999; animation: popIn 0.3s ease;}
+.custom-alert-box {background: #1a1a2e; padding: 25px 20px; border-radius: 15px; text-align: center; width: 90%; max-width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-top: 4px solid #007bff; white-space: pre-line;}
+.custom-alert-box.success { border-top: 4px solid #198754; }
+.custom-alert-box.error { border-top: 4px solid #dc3545; }
+.custom-alert-box.info { border-top: 4px solid #007bff; }
+.custom-alert-box h3 { margin: 0 0 10px 0; color: #fff; font-size: 18px; }
+.custom-alert-box p { margin: 0 0 15px 0; color: #ccc; font-size: 14px; }
+.custom-alert-btn {background: #007bff; color: white; border: none; padding: 10px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; width:100%;}
+@keyframes popIn { from {transform: scale(0.8); opacity:0;} to {transform: scale(1); opacity:1;} }
+
+@media(min-width:768px){
+.sidebar{width:220px;position:fixed;height:100%;overflow-y:auto;left:0;top:0;}
+.main-content{margin-left:240px;}
+.sidebar h2{text-align:left;}
+}
+@media(max-width:767px){
+.sidebar{position:relative;width:100%;}
+.grid{grid-template-columns:1fr 1fr;}
+.card{padding:10px;}
+h2{font-size:20px;}
+}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h2>NNAMP ADMIN🇳🇬</h2>
+    <a href="#" onclick="showTab('dashboard', this)" class="active">📊 Dashboard</a>
+    <a href="#" onclick="showTab('users', this)">👥 All Users</a>
+    <a href="#" onclick="showTab('deposits', this)">⬇️ Deposits</a>
+    <a href="#" onclick="showTab('withdraws', this)">⬆️ Withdrawals</a>
+    <a href="#" onclick="showTab('transactions', this)">📄 Transactions</a>
+    <a href="#" onclick="showTab('notification', this)">📢 Broadcast</a>
+    <a href="admin-login.html" onclick="localStorage.removeItem('nnamp_isAdmin')" style="color:#dc3545;">🚪 Logout</a>
+</div>
+
+<div class="main-content">
+    <h2>Admin Panel</h2>
+
+    <div id="dashboard" class="tab-content active">
+        <div class="grid">
+            <div class="card"><h4>Total Users</h4><p id="statUsers">0</p></div>
+            <div class="card"><h4>Platform Balance</h4><p id="statBalance">₦0</p></div>
+            <div class="card"><h4>Total Deposits</h4><p id="statDeposits">₦0</p></div>
+            <div class="card"><h4>Pending Withdrawals</h4><p id="statWithdraws">₦0</p></div>
+        </div>
+    </div>
+
+    <div id="users" class="tab-content">
+        <div class="card"><h4>All Users</h4><div class="table-wrapper"><table id="usersTable"></table></div></div>
+        <div class="card" id="manageBox" style="display:none;">
+            <h4>Manage: <span id="userName"></span></h4>
+            <input type="hidden" id="editPhoneHidden">
+            <label>Phone</label><input type="text" id="editPhone">
+            <label>Balance ₦</label><input type="number" id="editBalance">
+            <label>Bank</label><input type="text" id="editBank">
+            <label>Account No</label><input type="text" id="editAcc">
+            <label>Account Name</label><input type="text" id="editName">
+            <label>New Password</label><input type="text" id="editPass" placeholder="Leave blank to keep old">
+            <button class="btn green" onclick="saveUserChanges()">Save Changes</button>
+            <button class="btn red" onclick="deleteUser()">Delete User</button>
+        </div>
+    </div>
+
+    <div id="deposits" class="tab-content">
+        <div class="card"><h4>Pending Deposits</h4><div class="table-wrapper"><table id="depositsTable"></table></div></div>
+    </div>
+
+    <div id="withdraws" class="tab-content">
+        <div class="card"><h4>Pending Withdrawals</h4><div class="table-wrapper"><table id="withdrawsTable"></table></div></div>
+    </div>
+
+    <div id="transactions" class="tab-content">
+        <div class="card"><h4>All Transactions</h4><div class="table-wrapper"><table id="allTxTable"></table></div></div>
+    </div>
+
+    <div id="notification" class="tab-content">
+    <div class="card">
+
+        <h4>Send Broadcast to All Users</h4>
+
+        <input
+            type="text"
+            id="broadcastTitle"
+            placeholder="Broadcast Title">
+
+        <br><br>
+
+        <textarea
+            id="adminNotifText"
+            rows="4"
+            placeholder="Type announcement..."></textarea>
+
+        <br><br>
+
+        <button class="btn" onclick="sendNotificationToAll()">
+            Send Broadcast
+        </button>
+
+    </div>
+</div>
+</div>
+
+<script type="module">
+  import { auth, db } from "./firebase.js";
+
+import {
+    onAuthStateChanged,
+    signOut
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+
+
+import {
+    collection,
+    getDocs,
+    getDoc,
+    addDoc,
+    query,
+    where,
+    orderBy,
+    doc,
+    updateDoc,
+    deleteDoc,
+    increment,
+    serverTimestamp
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+// ========== CUSTOM POPUP FUNCTIONS - ADDED ==========
+function showAlert(title, message, type = "info") {
+    let alertDiv = document.createElement("div");
+    alertDiv.className = "custom-alert";
+    alertDiv.innerHTML = `
+        <div class="custom-alert-box ${type}">
+            <h3>${title}</h3>
+            <p>${message}</p>
+            <button class="custom-alert-btn" onclick="this.closest('.custom-alert').remove()">OK</button>
+        </div>
+    `;
+    document.body.appendChild(alertDiv);
+    setTimeout(() => { if(document.body.contains(alertDiv)){ alertDiv.remove(); } }, 3000);
+}
+
+function showConfirm(title, message, onConfirm) {
+    let confirmDiv = document.createElement("div");
+    confirmDiv.className = "custom-alert";
+    confirmDiv.innerHTML = `
+        <div class="custom-alert-box info">
+            <h3>${title}</h3>
+            <p>${message}</p>
+            <div style="display:flex; gap:10px; margin-top:15px;">
+                <button class="custom-alert-btn" style="background:#6c757d; flex:1;" onclick="this.closest('.custom-alert').remove()">Cancel</button>
+                <button class="custom-alert-btn" id="confirmYesBtn" style="background:#007bff; flex:1;">OK</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(confirmDiv);
+    document.getElementById('confirmYesBtn').onclick = function(){
+        confirmDiv.remove();
+        if(onConfirm) onConfirm();
+    }
+}
+// ========== END POPUP FUNCTIONS ==========
+
+
+
+// 1. SECURITY CHECK
+onAuthStateChanged(auth, async (user)=>{
+
+    if(!user){
+
+        showAlert(
+            "Access Denied ❌",
+            "Please login as admin first.",
+            "error"
+        );
+
+        setTimeout(()=>{
+            window.location.href = "admin-login.html";
+        },1500);
+
+        return;
+    }
+
+
+    const adminSnap = await getDoc(
+        doc(db, "users", user.uid)
+    );
+
+
+    if(!adminSnap.exists() || adminSnap.data().admin !== true){
+
+        showAlert(
+            "Access Denied ❌",
+            "You are not an administrator.",
+            "error"
+        );
+
+        await signOut(auth);
+
+        setTimeout(()=>{
+            window.location.href = "admin-login.html";
+        },1500);
+
+        return;
+    }
+
+
+    console.log("Admin verified:", adminSnap.data());
+
+
+    await updateDashboardStats();
+    loadAllUsers();
+
+});
+
+function showTab(tabName, el) {
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+    document.getElementById(tabName).classList.add('active');
+    el.classList.add('active');
+    if(tabName === 'deposits') loadPendingDeposits();
+    if(tabName === 'withdraws') loadPendingWithdrawals();
+    if(tabName === 'users') loadAllUsers();
+    if(tabName === 'transactions') loadAllTransactions();
+    if(tabName === 'dashboard') updateDashboardStats();
+}
+
+function getUserName(u){
+    return u.name || u.fullname || u.phone || 'No Name';
+}
+
+function addNotification(phone, title, msg){
+    let notifKey = 'nnamp_notif_' + phone;
+    let notifs = JSON.parse(localStorage.getItem(notifKey)) || [];
+    notifs.unshift({ id: Date.now(), title, msg, date: new Date().toLocaleString(), read: false });
+    localStorage.setItem(notifKey, JSON.stringify(notifs));
+}
+
+async function loadAllUsers() {
+
+    try {
+
+        const usersSnap = await getDocs(
+            collection(db, "users")
+        );
+
+
+        let rows = `
+        <tr>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Balance</th>
+            <th>Joined</th>
+            <th>Action</th>
+        </tr>`;
+
+
+        if(usersSnap.empty){
+
+            rows += `
+            <tr>
+                <td colspan="5">
+                    No users found
+                </td>
+            </tr>`;
+
+        } else {
+
+
+            usersSnap.forEach((docSnap)=>{
+
+                const u = docSnap.data();
+
+
+                rows += `
+                <tr>
+                    <td>${u.fullname || "No Name"}</td>
+
+                    <td>${u.phone || "-"}</td>
+
+                    <td>
+                    ₦${Number(u.balance || 0).toLocaleString()}
+                    </td>
+
+                    <td>
+                    ${u.joined || "-"}
+                    </td>
+
+                    <td>
+                    <button class="btn" 
+                    onclick="manageUser('${docSnap.id}')">
+                    Manage
+                    </button>
+                    </td>
+
+                </tr>`;
+
+            });
+
+        }
+
+
+        document.getElementById("usersTable").innerHTML = rows;
+
+
+    } catch(error){
+
+        console.error("Load users error:", error);
+
+        showAlert(
+            "Error ❌",
+            "Unable to load users",
+            "error"
+        );
+
+    }
+
+}
+
+async function manageUser(uid) {
+
+    try {
+
+        const userSnap = await getDoc(
+            doc(db, "users", uid)
+        );
+
+
+        if(!userSnap.exists()){
+
+            showAlert(
+                "Error ❌",
+                "User not found",
+                "error"
+            );
+
+            return;
+        }
+
+
+        const user = userSnap.data();
+
+
+        document.getElementById('manageBox').style.display = 'block';
+
+
+        document.getElementById('userName').innerText =
+        user.fullname || "No Name";
+
+
+        document.getElementById('editPhoneHidden').value = uid;
+
+
+        document.getElementById('editPhone').value =
+        user.phone || "";
+
+
+        document.getElementById('editBalance').value =
+        user.balance || 0;
+
+
+        document.getElementById('editBank').value =
+        user.bank || "";
+
+
+        document.getElementById('editAcc').value =
+        user.accountNo || "";
+
+
+        document.getElementById('editName').value =
+        user.accountName || "";
+
+
+    } catch(error){
+
+        console.error(error);
+
+        showAlert(
+            "Error ❌",
+            "Unable to load user",
+            "error"
+        );
+
+    }
+
+}
+
+async function saveUserChanges(){
+
+    showConfirm(
+        "Save Changes?",
+        "Are you sure you want to update this user's information?",
+        async function(){
+
+            try{
+
+                const uid =
+                document.getElementById('editPhoneHidden').value;
+
+
+                await updateDoc(
+                    doc(db,"users",uid),
+                    {
+                        phone: document.getElementById('editPhone').value,
+                        balance: Number(document.getElementById('editBalance').value),
+                        bank: document.getElementById('editBank').value,
+                        accountNo: document.getElementById('editAcc').value,
+                        accountName: document.getElementById('editName').value
+                    }
+                );
+
+
+                showAlert(
+                    "Updated ✅",
+                    "User details updated successfully",
+                    "success"
+                );
+
+
+                loadAllUsers();
+
+                document.getElementById('manageBox').style.display="none";
+
+
+            }catch(error){
+
+                console.error(error);
+
+                showAlert(
+                    "Error ❌",
+                    "Update failed",
+                    "error"
+                );
+
+            }
+
+        }
+    );
+
+}
+
+async function deleteUser(){
+
+    showConfirm(
+        "Delete User?",
+        "Delete this user permanently?",
+        async function(){
+
+            try{
+
+                const uid =
+                document.getElementById('editPhoneHidden').value;
+
+                // Delete all personal notifications
+                const notifSnap = await getDocs(
+                    query(
+                        collection(db, "notifications"),
+                        where("userId", "==", uid)
+                    )
+                );
+
+                for (const notif of notifSnap.docs){
+                    await deleteDoc(doc(db, "notifications", notif.id));
+                }
+
+                // Delete user document
+                await deleteDoc(
+                    doc(db,"users",uid)
+                );
+
+                showAlert(
+                    "Deleted 🗑️",
+                    "User removed successfully",
+                    "success"
+                );
+
+                loadAllUsers();
+
+                document.getElementById('manageBox').style.display="none";
+
+            }catch(error){
+
+                console.error(error);
+
+                showAlert(
+                    "Error ❌",
+                    "Unable to delete user",
+                    "error"
+                );
+
+            }
+
+        }
+    );
+
+}
+
+async function approveDeposit(depositId, userId, amount){
+const depositSnap = await getDoc(doc(db, "deposits", depositId));
+
+if (depositSnap.data().status === "Approved") {
+    showAlert(
+        "Already Approved",
+        "This deposit has already been approved.",
+        "info"
+    );
+    return;
+}
+
+    try{
+
+        // Update deposit status
+        await updateDoc(
+            doc(db,"deposits",depositId),
+            {
+                status:"Approved",
+                approvedAt:new Date()
+            }
+        );
+
+
+        // Add money to user balance
+        await updateDoc(
+            doc(db,"users",userId),
+            {
+                balance: increment(Number(amount))
+            }
+        );
+const userRef = doc(db, "users", userId);
+
+const userSnap = await getDoc(userRef);
+
+if (userSnap.exists()) {
+
+    const user = userSnap.data();
+
+    const transactions = user.transactions || [];
+
+    const index = transactions.findIndex(
+        t =>
+            t.type === "Deposit" &&
+            t.amount === Number(amount) &&
+            t.status === "Pending"
+    );
+
+    if (index !== -1) {
+        transactions[index].status = "Approved";
+    }
+
+    await updateDoc(userRef, {
+        transactions: transactions
+    });
+
+}
+
+        showAlert(
+            "Deposit Approved ✅",
+            "User wallet has been credited.",
+            "success"
+        );
+
+
+        loadPendingDeposits();
+
+
+    }catch(error){
+
+        console.error(error);
+
+        showAlert(
+            "Error ❌",
+            "Could not approve deposit.",
+            "error"
+        );
+
+    }
+
+}
+
+async function rejectDeposit(depositId){
+
+    try{
+const depositSnap = await getDoc(doc(db, "deposits", depositId));
+
+const deposit = depositSnap.data();
+
+const userRef = doc(db, "users", deposit.userId);
+
+const userSnap = await getDoc(userRef);
+
+if (userSnap.exists()) {
+
+    const user = userSnap.data();
+
+    const transactions = user.transactions || [];
+
+    const index = transactions.findIndex(
+        t =>
+            t.type === "Deposit" &&
+            t.amount === deposit.amount &&
+            t.status === "Pending"
+    );
+
+    if (index !== -1) {
+        transactions[index].status = "Rejected";
+    }
+
+    await updateDoc(userRef, {
+        transactions: transactions
+    });
+
+}
+        await updateDoc(
+            doc(db,"deposits",depositId),
+            {
+                status:"Rejected",
+                rejectedAt:new Date()
+            }
+        );
+
+
+        showAlert(
+            "Deposit Rejected ❌",
+            "Deposit request has been rejected.",
+            "info"
+        );
+
+
+        loadPendingDeposits();
+
+
+    }catch(error){
+
+        console.error(error);
+
+        showAlert(
+            "Error ❌",
+            "Could not reject deposit.",
+            "error"
+        );
+
+    }
+
+}
+
+// FIXED: NO DOUBLE DEDUCTION
+async function approveWithdrawal(withdrawId){
+
+    showConfirm(
+        "Approve Withdrawal",
+        "Are you sure you want to approve this withdrawal?",
+        async function(){
+
+            try {
+  const withdrawSnap = await getDoc(doc(db, "withdrawals", withdrawId));
+const withdrawal = withdrawSnap.data();
+
+    await updateDoc(
+        doc(db, "withdrawals", withdrawId),
+        {
+            status: "Approved",
+            approvedAt: serverTimestamp()
+        }
+    );
+const userRef = doc(db, "users", withdrawal.userId);
+
+const userSnap = await getDoc(userRef);
+const userData = userSnap.data();
+
+const transactions = userData.transactions || [];
+
+const index = transactions.findIndex(
+    t =>
+        t.type === "Withdrawal" &&
+        t.amount === withdrawal.amount &&
+        t.status === "Pending"
+);
+
+if (index !== -1) {
+    transactions[index].status = "Approved";
+}
+
+await updateDoc(userRef, {
+    transactions: transactions
+});
+
+    showAlert(
+        "Success ✅",
+        "Withdrawal approved successfully.",
+        "success"
+    );
+
+} catch (error) {
+
+    console.error("Approve Error:", error);
+
+    showAlert(
+        "Error ❌",
+        error.message,
+        "error"
+    );
+
+}
+
+            loadPendingWithdrawals();
+
+        }
+    );
+
+}
+
+// FIXED: ADD REFUND ON REJECT
+async function rejectWithdrawal(withdrawId){
+
+    showConfirm(
+        "Reject Withdrawal",
+        "Reject this withdrawal and refund the user's balance?",
+        async function(){
+
+            const withdrawRef = doc(db, "withdrawals", withdrawId);
+            const withdrawSnap = await getDoc(withdrawRef);
+
+            if(!withdrawSnap.exists()){
+                showAlert("Error", "Withdrawal not found.", "error");
+                return;
+            }
+
+            const w = withdrawSnap.data();
+
+            const userRef = doc(db, "users", w.userId);
+            const userSnap = await getDoc(userRef);
+
+            if(userSnap.exists()){
+
+                const user = userSnap.data();
+
+                await updateDoc(userRef,{
+                    balance: Number(user.balance) + Number(w.amount)
+                });
+// Update user's transaction history
+const transactions = user.transactions || [];
+
+const index = transactions.findIndex(
+    t =>
+        t.type === "Withdrawal" &&
+        t.amount === w.amount &&
+        t.status === "Pending"
+);
+
+if (index !== -1) {
+    transactions[index].status = "Rejected";
+}
+
+await updateDoc(userRef, {
+    transactions: transactions
+});
+            }
+
+            await updateDoc(withdrawRef,{
+                status: "Rejected",
+                rejectedAt: serverTimestamp()
+            });
+
+            showAlert(
+                "Success ✅",
+                "Withdrawal rejected and user's balance refunded.",
+                "success"
+            );
+
+            loadPendingWithdrawals();
+
+        }
+    );
+
+}
+
+async function loadPendingDeposits(){
+
+    let table = document.getElementById("depositsTable");
+
+    table.innerHTML = `
+    <tr>
+    <th>User</th>
+    <th>Amount</th>
+    <th>Date</th>
+    <th>Proof</th>
+    <th>Action</th>
+    </tr>
+    `;
+
+    try{
+
+        const q = query(
+            collection(db,"deposits"),
+            where("status","==","Pending")
+        );
+
+        const snapshot = await getDocs(q);
+
+
+        if(snapshot.empty){
+
+            table.innerHTML += `
+            <tr>
+            <td colspan="5">No pending deposits</td>
+            </tr>
+            `;
+
+            return;
+        }
+
+
+        for(const depositDoc of snapshot.docs){
+
+            let deposit = depositDoc.data();
+
+
+            let userName = "Unknown";
+
+
+            // Get user details
+            if(deposit.userId){
+
+                const userSnap = await getDoc(
+                    doc(db,"users",deposit.userId)
+                );
+
+
+                if(userSnap.exists()){
+
+                    userName =
+                    userSnap.data().fullname ||
+                    userSnap.data().phone;
+
+                }
+
+            }
+
+
+            table.innerHTML += `
+
+            <tr>
+
+            <td>${userName}</td>
+
+            <td>₦${Number(deposit.amount).toLocaleString()}</td>
+
+            <td>
+${
+(() => {
+
+    let d = deposit.createdAt || deposit.date;
+
+    if(!d) return "-";
+
+
+    // Firestore Timestamp
+    if(d.seconds){
+        return new Date(d.seconds * 1000).toLocaleString();
+    }
+
+
+    // Number timestamp
+    if(typeof d === "number"){
+        return new Date(d).toLocaleString();
+    }
+
+
+    // Normal date string
+    let date = new Date(d);
+
+    if(!isNaN(date)){
+        return date.toLocaleString();
+    }
+
+
+    return "Invalid Date";
+
+})()
+}
+</td>
+            
+            
+
+
+            <td>
+            ${
+            deposit.proofUrl
+            ?
+            `<img src="${deposit.proofUrl}" 
+            class="proof-thumb"
+            onclick="window.open('${deposit.proofUrl}','_blank')">`
+            :
+            "-"
+            }
+            </td>
+
+
+
+            <td>
+<button class="btn green"
+onclick="this.disabled=true; this.innerText='Approved'; approveDeposit('${depositDoc.id}', '${deposit.userId}', ${deposit.amount})">
+Approve
+</button>
+
+
+            <button class="btn red"
+            onclick="rejectDeposit('${depositDoc.id}')">
+            Reject
+            </button>
+
+            </td>
+
+            </tr>
+
+            `;
+
+        }
+
+
+    }catch(error){
+
+        console.error(error);
+
+        showAlert(
+        "Error ❌",
+        "Unable to load deposits",
+        "error"
+        );
+
+    }
+
+}
+
+async function loadPendingWithdrawals() {
+    const withdrawalsSnap = await getDocs(
+    query(
+        collection(db, "withdrawals"),
+        where("status", "==", "Pending")
+    )
+);
+
+let rows = `<tr><th>User</th><th>Amount</th><th>Date</th><th>Bank Details</th><th>Action</th></tr>`;
+let found = false;
+
+withdrawalsSnap.forEach((docSnap) => {
+
+    const w = docSnap.data();
+
+    found = true;
+
+    rows += `
+    <tr>
+        <td>${w.fullname}<br><small>${w.phone}</small></td>
+        <td>₦${Number(w.amount).toLocaleString()}</td>
+        <td>${w.createdAt ? w.createdAt.toDate().toLocaleString() : "-"}</td>
+        <td>${w.bank}<br>${w.accountNo}</td>
+        <td>
+            <button class="btn green" onclick="approveWithdrawal('${docSnap.id}')">Approve</button>
+            <button class="btn red" onclick="rejectWithdrawal('${docSnap.id}')">Reject</button>
+        </td>
+    </tr>`;
+});
+    document.getElementById('withdrawsTable').innerHTML = found? rows : '<tr><td colspan="5">No pending withdrawals</td></tr>';
+}
+
+async function loadAllTransactions() {
+
+    try {
+
+        const usersSnap = await getDocs(
+            collection(db, "users")
+        );
+
+        let rows = `
+        <tr>
+            <th>User</th>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Date</th>
+        </tr>`;
+
+        if (usersSnap.empty) {
+
+            rows += `
+            <tr>
+                <td colspan="5">No transactions found</td>
+            </tr>`;
+
+        } else {
+
+            usersSnap.forEach((docSnap) => {
+
+                const user = docSnap.data();
+
+                const transactions = user.transactions || [];
+
+                transactions.forEach((tx) => {
+
+                    const className =
+                        tx.status === "Approved"
+                        ? "status-approved"
+                        : tx.status === "Pending"
+                        ? "status-pending"
+                        : "status-rejected";
+
+                    rows += `
+                    <tr>
+                        <td>${user.fullname || "No Name"}</td>
+                        <td>${tx.type}</td>
+                        <td>₦${Number(tx.amount || 0).toLocaleString()}</td>
+                        <td class="${className}">
+                            ${tx.status}
+                        </td>
+                        <td>${tx.date || "-"}</td>
+                    </tr>`;
+                });
+
+            });
+
+        }
+
+        document.getElementById("allTxTable").innerHTML = rows;
+
+    } catch (error) {
+
+        console.error(error);
+
+        showAlert(
+            "Error ❌",
+            "Unable to load transactions",
+            "error"
+        );
+
+    }
+
+}
+
+async function sendNotificationToAll() {
+
+    let title = document.getElementById("broadcastTitle").value.trim();
+
+    let message = document.getElementById("adminNotifText").value.trim();
+
+    if(!title){
+        return showAlert(
+            "Empty ❌",
+            "Enter a broadcast title.",
+            "error"
+        );
+    }
+
+    if(!message){
+        return showAlert(
+            "Empty ❌",
+            "Type a message first.",
+            "error"
+        );
+    }
+
+    await addDoc(collection(db, "broadcasts"), {
+
+        title: title,
+        message: message,
+        createdAt: serverTimestamp(),
+        readBy: []
+
+    });
+
+    showAlert(
+        "Broadcast Sent 📢",
+        "Broadcast has been sent to all users.",
+        "success"
+    );
+
+    document.getElementById("broadcastTitle").value = "";
+    document.getElementById("adminNotifText").value = "";
+
+}
+
+async function updateDashboardStats(){
+
+    try {
+
+        // GET ALL USERS
+        const usersSnap = await getDocs(
+            collection(db, "users")
+        );
+console.log("Users found:", usersSnap.size);
+
+        let totalUsers = 0;
+        let totalBalance = 0;
+
+
+        usersSnap.forEach((doc)=>{
+
+            const user = doc.data();
+
+            totalUsers++;
+
+            totalBalance += Number(user.balance || 0);
+
+        });
+
+
+
+        document.getElementById("statUsers").innerText = totalUsers;
+
+        document.getElementById("statBalance").innerText =
+        "₦" + totalBalance.toLocaleString();
+
+
+
+        // GET DEPOSITS
+        const depositsSnap = await getDocs(
+            collection(db,"deposits")
+        );
+
+
+        let totalDeposits = 0;
+
+
+        depositsSnap.forEach((doc)=>{
+
+            const deposit = doc.data();
+
+            if(deposit.status === "Approved"){
+
+                totalDeposits += Number(deposit.amount || 0);
+
+            }
+
+        });
+
+
+
+        document.getElementById("statDeposits").innerText =
+        "₦" + totalDeposits.toLocaleString();
+
+
+
+        // GET WITHDRAWALS
+        const withdrawSnap = await getDocs(
+            collection(db,"withdrawals")
+        );
+
+
+        let pendingWithdrawals = 0;
+
+
+        withdrawSnap.forEach((doc)=>{
+
+            const withdrawal = doc.data();
+
+
+            if(withdrawal.status === "Pending"){
+
+                pendingWithdrawals += Number(withdrawal.amount || 0);
+
+            }
+
+        });
+
+
+
+        document.getElementById("statWithdraws").innerText =
+        "₦" + pendingWithdrawals.toLocaleString();
+
+
+
+    } catch(error){
+
+        console.error("Dashboard Error:", error);
+
+        showAlert(
+            "Error ❌",
+            "Unable to load dashboard data",
+            "error"
+        );
+
+    }
+
+}
+window.showTab = showTab;
+window.loadAllUsers = loadAllUsers;
+window.loadPendingDeposits = loadPendingDeposits;
+window.loadPendingWithdrawals = loadPendingWithdrawals;
+window.loadAllTransactions = loadAllTransactions;
+window.sendNotificationToAll = sendNotificationToAll;
+window.manageUser = manageUser;
+window.saveUserChanges = saveUserChanges;
+window.deleteUser = deleteUser;
+window.approveDeposit = approveDeposit;
+window.rejectDeposit = rejectDeposit;
+window.showConfirm = showConfirm;
+window.approveWithdrawal = approveWithdrawal;
+window.rejectWithdrawal = rejectWithdrawal;
+window.sendNotificationToAll = sendNotificationToAll;
+</script>
+</body>
+</html>

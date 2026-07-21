@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NNAMP - Profile</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+      .menu-toggle {background: #0d6e2f!important; color: white!important; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px!important; border: none;}
+      .close-sidebar {background: #0d6e2f!important; color: white!important; width: 40px; height: 40px; border-radius: 10px; font-size: 22px!important; font-weight: bold; border: none; position: absolute; top: 15px; right: 15px;}
+      .profile-card{ background:#fff; padding:20px; border-radius:15px; margin-bottom:15px; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
+      .profile-card h3{ color:#0d6e2f; margin:0 0 15px 0; padding-bottom:10px; border-bottom:1px solid #eee; }
+      .profile-card p{ margin:10px 0; }
+      .btn-danger{ background:#dc3545; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold; width:100%; text-align:center; text-decoration:none; display:block; margin-top:10px; }
+    </style>
+</head>
+<body>
+<div class="dashboard-layout">
+    <aside class="sidebar">
+        <button class="close-sidebar" onclick="toggleSidebar()">✕</button>
+        <div class="logo">NNAMP<span>🇳🇬</span><p>Grow - Invest - Prosper</p></div>
+        <nav>
+            <a href="dashboard.html">🏠 Dashboard</a>
+            <a href="investments.html">📊 Investments</a>
+            <a href="savings.html">💰 Savings</a>
+            <a href="deposit.html">⬇️ Deposit</a>
+            <a href="withdraw.html">⬆️ Withdraw</a>
+            <a href="transactions.html">📄 Transactions</a>
+            <a href="referrals.html">👥 Referrals</a>
+            <a href="daily-bonus.html">🎁 Daily Bonus</a>
+            <a href="profile.html" class="active">👤 Profile</a>
+            <a href="settings.html">⚙️ Settings</a>
+            <a href="support.html">🎧 Support Center</a>
+            <a href="#" onclick="logout()" style="color:#dc3545;">🚪 Logout</a>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <header style="display:flex; justify-content:space-between; align-items:center; padding:15px 0;">
+            <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+            <h2 style="color:#0d6e2f; margin:0;">My Profile</h2>
+            <div></div>
+        </header>
+
+        <div class="container" style="max-width:600px;">
+            <div class="profile-card">
+                <h3>Account Information</h3>
+                <p><strong>Phone Number:</strong> <span id="profilePhone">-</span></p>
+                <p><strong>Account Status:</strong> <span style="color:#198754; font-weight:bold;">Active</span></p>
+                <p><strong>Member Since:</strong> <span id="profileDate">-</span></p>
+            </div>
+
+            <div class="profile-card">
+                <h3>Bank Details</h3>
+                <p><strong>Bank Name:</strong> <span id="profileBank">Not Set</span></p>
+                <p><strong>Account Number:</strong> <span id="profileAcc">Not Set</span></p>
+                <p><strong>Account Name:</strong> <span id="profileName">Not Set</span></p>
+                <p style="color:#888; font-size:13px; margin-top:10px;">
+                    🔒 To change bank details or phone number, contact Support.
+                </p>
+            </div>
+
+            <div class="profile-card">
+                <h3>Security</h3>
+                <p style="color:#888; font-size:14px;">
+                    🔒 Password changes are done by Admin only. 
+                    Contact Support if you need help.
+                </p>
+                <a href="#" onclick="logout()" class="btn-danger">Logout</a>
+            </div>
+        </div>
+
+        <!-- BOTTOM NAV -->
+        <nav style="position:fixed; bottom:0; left:0; width:100%; background:#fff; display:flex; justify-content:space-around; align-items:center; padding:8px 0; border-top:1px solid #eee; z-index:9999;">
+            <a href="dashboard.html" style="text-align:center; color:#888; text-decoration:none; font-size:11px;"><div style="font-size:22px;">🏠</div><small>Home</small></a>
+            <a href="investments.html" style="text-align:center; color:#888; text-decoration:none; font-size:11px;"><div style="font-size:22px;">📊</div><small>Invest</small></a>
+            <a href="savings.html" style="text-align:center; color:#888; text-decoration:none; font-size:11px;"><div style="font-size:22px;">💰</div><small>Savings</small></a>
+            <a href="transactions.html" style="text-align:center; color:#888; text-decoration:none; font-size:11px;"><div style="font-size:22px;">📄</div><small>History</small></a>
+            <a href="profile.html" style="text-align:center; color:#0d6e2f; text-decoration:none; font-size:11px;"><div style="font-size:22px;">👤</div><small>Profile</small></a>
+        </nav>
+    </main>
+</div>
+
+<script type="module">
+
+import { auth, db } from "./firebase.js";
+
+import {
+    onAuthStateChanged,
+    signOut
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+
+import {
+    doc,
+    getDoc
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+let currentUser = null;
+
+function toggleSidebar(){
+    document.querySelector(".sidebar").classList.toggle("active");
+}
+
+async function logout(){
+    await signOut(auth);
+    window.location.href = "login.html";
+}
+
+onAuthStateChanged(auth, async(user)=>{
+
+    if(!user){
+        window.location.href="login.html";
+        return;
+    }
+
+    const snap = await getDoc(doc(db,"users",user.uid));
+
+    if(!snap.exists()){
+        alert("User not found");
+        return;
+    }
+
+    currentUser = snap.data();
+
+    loadProfile();
+
+});
+
+function loadProfile(){
+
+    // Phone
+    document.getElementById("profilePhone").textContent =
+        currentUser.phone || "-";
+
+    // Member Since
+    let userDate = currentUser.joined;
+
+if (userDate) {
+    let date = new Date(userDate);
+
+    document.getElementById("profileDate").textContent =
+        date.toLocaleString();
+} else {
+    document.getElementById("profileDate").textContent = "Not available";
+}
+
+    // Bank Details
+    document.getElementById("profileBank").textContent =
+        currentUser.bankName || currentUser.bank || "Not Set";
+
+    document.getElementById("profileAcc").textContent =
+        currentUser.accountNumber || currentUser.accountNo || "Not Set";
+
+    document.getElementById("profileName").textContent =
+        currentUser.accountName || "Not Set";
+
+}
+
+window.toggleSidebar = toggleSidebar;
+window.logout = logout;
+</script>
+
+</body>
+</html>

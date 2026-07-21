@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NNAMP - Settings</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+     .menu-toggle {background: #0d6e2f!important; color: white!important; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px!important; border: none;}
+     .close-sidebar {background: #0d6e2f!important; color: white!important; width: 40px; height: 40px; border-radius: 10px; font-size: 22px!important; font-weight: bold; border: none; position: absolute; top: 15px; right: 15px;}
+
+      /* NEW CLEAN ALERT POPUP - Only this was added */
+     .custom-alert {position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 99999; animation: fadeIn 0.3s ease;}
+     .custom-alert-box {background: #1f1f3a; padding: 30px 25px; border-radius: 20px; text-align: center; width: 90%; max-width: 360px; box-shadow: 0 10px 40px rgba(0,0,0,0.4); border-top: 4px solid #0d6e2f; white-space: pre-line; animation: popUp 0.3s ease;}
+     .custom-alert-box h3 { margin: 0 0 10px; font-size: 20px; font-weight: 700; color: #0d6e2f; }
+     .custom-alert-box p { margin: 0 0 20px; font-size: 15px; color: #ccc; line-height: 1.5; }
+     .custom-alert-btn {background: linear-gradient(90deg, #0d6e2f, #0a5122); color: white; border: none; padding: 12px 25px; border-radius: 12px; font-weight: 600; cursor: pointer; width:100%; font-size: 16px; transition: transform 0.2s;}
+     .custom-alert-btn:active { transform: scale(0.95); }
+      @keyframes fadeIn { from {opacity:0} to {opacity:1} }
+      @keyframes popUp { from {transform:scale(0.8); opacity:0} to {transform:scale(1); opacity:1} }
+    </style>
+</head>
+<body>
+<div class="dashboard-layout">
+    <aside class="sidebar">
+        <button class="close-sidebar" onclick="toggleSidebar()">✕</button>
+        <div class="logo">NNAMP🌱🇳🇬<span>.</span><p>Grow - Invest - Prosper</p></div>
+        <nav>
+            <a href="dashboard.html">🏠 Dashboard</a>
+            <a href="investments.html">📊 Investments</a>
+            <a href="savings.html">💰 Savings</a>
+            <a href="deposit.html">⬇️ Deposit</a>
+            <a href="withdraw.html">⬆️ Withdraw</a>
+            <a href="transactions.html">📄 Transactions</a>
+            <a href="referrals.html">👥 Referrals</a>
+            <a href="daily-bonus.html">🎁 Daily Bonus</a>
+            <a href="profile.html">👤 Profile</a>
+            <a href="settings.html" class="active">⚙️ Settings</a>
+            <a href="support.html">🎧 Support Center</a>
+            <a href="#" onclick="logout()" style="color:#dc3545;">🚪 Logout</a>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <header style="display:flex; justify-content:space-between; align-items:center; padding:15px 0;">
+            <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+            <h2 style="color:#0d6e2f; margin:0;">⚙️ Settings</h2>
+            <div></div>
+        </header>
+
+        <div style="max-width:600px;">
+            <div class="card">
+                <h4>Bank Details</h4>
+                <p style="color:#888; font-size:14px; margin-bottom:15px;">
+                    You can add your bank account once. To change it later, contact support.
+                </p>
+
+                <div id="noBank" style="background:#fff3cd; padding:15px; border-radius:10px; margin:15px 0;">
+                    <p>❌ No bank account added yet</p>
+                    <button class="btn" onclick="showBankForm()">+ Add Bank Account</button>
+                </div>
+
+                <div id="bankForm" style="display:none;">
+                    <input type="text" id="bankName" placeholder="Bank Name" style="width:100%; padding:12px; margin:10px 0; border:1px solid #ddd; border-radius:8px;" required>
+                    <input type="number" id="accountNumber" placeholder="Account Number" style="width:100%; padding:12px; margin:10px 0; border:1px solid #ddd; border-radius:8px;" required>
+                    <input type="text" id="accountName" placeholder="Account Name" style="width:100%; padding:12px; margin:10px 0; border:1px solid #ddd; border-radius:8px;" required>
+                    <button class="btn" onclick="saveBank()">Save Bank Details</button>
+                </div>
+
+                <div id="bankSaved" style="display:none; background:#e8f5e9; padding:15px; border-radius:10px;">
+                    <p><b>Bank:</b> <span id="savedBank"></span></p>
+                    <p><b>Account No:</b> <span id="savedAccNo"></span></p>
+                    <p><b>Account Name:</b> <span id="savedAccName"></span></p>
+                    <p style="color:#d9534f; font-size:13px; margin-top:10px;">🔒 Locked. Contact support to change.</p>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top:20px;">
+                <h4>Change Password</h4>
+                <p style="color:#888; font-size:14px; margin-bottom:15px;">
+                    For your security, password cannot be changed here.
+                    Contact support to request a password reset.
+                </p>
+                <a href="support.html" class="btn">Contact Support</a>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script type="module">
+import { auth, db } from "./firebase.js";
+
+import {
+    onAuthStateChanged,
+    signOut
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+
+import {
+    doc,
+    getDoc,
+    updateDoc
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+let currentUser = null;
+
+onAuthStateChanged(auth, async (user) => {
+
+    if (!user) {
+        window.location.href = "login.html";
+        return;
+    }
+
+    const snap = await getDoc(doc(db, "users", user.uid));
+
+    if (!snap.exists()) {
+        showAlert("Error ❌", "User not found.");
+        return;
+    }
+
+    currentUser = snap.data();
+
+    loadBankDetails();
+
+});
+// NEW CLEAN ALERT FUNCTION - Only this was added
+function showAlert(title, message) {
+    let alertDiv = document.createElement("div");
+    alertDiv.className = "custom-alert";
+    alertDiv.innerHTML = `<div class="custom-alert-box"><h3>${title}</h3><p>${message}</p><button class="custom-alert-btn" onclick="this.closest('.custom-alert').remove()">OK</button></div>`;
+    document.body.appendChild(alertDiv);
+    setTimeout(() => { if(document.body.contains(alertDiv)){ alertDiv.remove(); } }, 4000);
+}
+
+function toggleSidebar(){ document.querySelector('.sidebar').classList.toggle('active'); }
+async function logout(){
+
+    await signOut(auth);
+
+    window.location.href = "login.html";
+
+}
+
+
+
+// Bank details are loaded after Firebase authentication.
+// No window.onload is needed.
+
+function loadBankDetails(){
+
+    if(!currentUser){
+        return;
+    }
+
+    if(currentUser.bank && currentUser.accountNo){
+
+        document.getElementById("noBank").style.display = "none";
+        document.getElementById("bankForm").style.display = "none";
+        document.getElementById("bankSaved").style.display = "block";
+
+        document.getElementById("savedBank").innerText = currentUser.bank;
+        document.getElementById("savedAccNo").innerText = currentUser.accountNo;
+        document.getElementById("savedAccName").innerText = currentUser.accountName;
+
+    }else{
+
+        document.getElementById("noBank").style.display = "block";
+        document.getElementById("bankForm").style.display = "none";
+        document.getElementById("bankSaved").style.display = "none";
+
+    }
+
+}
+
+function showBankForm() {
+    if(currentUser.bank){
+        showAlert("Locked 🔒", "Bank details already set. Contact support to change.");
+        return;
+    }
+    document.getElementById('bankForm').style.display = 'block';
+    document.getElementById('noBank').style.display = 'none';
+}
+
+async function saveBank(){
+
+    let bank = document.getElementById("bankName").value.trim();
+    let accNo = document.getElementById("accountNumber").value.trim();
+    let accName = document.getElementById("accountName").value.trim();
+
+    if(bank === "" || accNo === "" || accName === ""){
+        showAlert("Error ❌","Please fill all fields");
+        return;
+    }
+
+    if(accNo.length !== 10){
+        showAlert("Error ❌","Account number must be exactly 10 digits");
+        return;
+    }
+
+    try{
+
+        await updateDoc(doc(db,"users",auth.currentUser.uid),{
+
+            bank: bank,
+            accountNo: accNo,
+            accountName: accName
+
+        });
+
+        currentUser.bank = bank;
+        currentUser.accountNo = accNo;
+        currentUser.accountName = accName;
+
+        loadBankDetails();
+
+        showAlert(
+            "Success ✅",
+            "Bank details saved successfully.\nYou cannot edit them again."
+        );
+
+    }catch(err){
+
+        console.error(err);
+
+        showAlert(
+            "Error ❌",
+            "Failed to save bank details."
+        );
+
+    }
+
+}
+window.toggleSidebar = toggleSidebar;
+window.logout = logout;
+window.showBankForm = showBankForm;
+window.saveBank = saveBank;
+
+</script>
+
+</body>
+</html>

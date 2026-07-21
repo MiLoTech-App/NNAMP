@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NNAMP - Daily Bonus</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* CUSTOM POPUP STYLES */
+       .custom-alert {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+            animation: fadeIn 0.2s;
+        }
+       .custom-alert-box {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s;
+        }
+       .custom-alert-box h3 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+            color: #0d6e2f;
+        }
+       .custom-alert-box p {
+            margin: 0 0 15px 0;
+            color: #555;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+       .custom-alert-btn {
+            background: #0d6e2f;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            font-size: 15px;
+        }
+       .custom-alert-btn:hover { opacity: 0.9; }
+        @keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
+        @keyframes slideUp { from {transform:translateY(20px); opacity:0;} to {transform:translateY(0); opacity:1;} }
+        .menu-toggle{
+    background:#0d6e2f!important;
+    color:white!important;
+    width:40px;
+    height:40px;
+    border:none;
+    border-radius:10px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:22px;
+}
+
+.close-sidebar{
+    background:#0d6e2f!important;
+    color:white!important;
+    width:40px;
+    height:40px;
+    border:none;
+    border-radius:10px;
+    position:absolute;
+    top:15px;
+    right:15px;
+    font-size:22px;
+    font-weight:bold;
+}
+    </style>
+</head>
+<body>
+<div class="dashboard-layout">
+    <aside class="sidebar">
+     <button class="close-sidebar" onclick="toggleSidebar()">✕</button> 
+        <div class="logo">NNAMP🇳🇬<span>.</span><p>Grow - Invest - Prosper</p></div>
+        <nav>
+            <a href="dashboard.html">🏠 Dashboard</a>
+            <a href="investments.html">📊 Investments</a>
+            <a href="savings.html">💰 Savings</a>
+            <a href="deposit.html">⬇️ Deposit</a>
+            <a href="withdraw.html">⬆️ Withdraw</a>
+            <a href="transactions.html">📄 Transactions</a>
+            <a href="referrals.html">👥 Referrals</a>
+            <a href="daily-bonus.html" class="active">🎁 Daily Bonus</a>
+            <a href="notifications.html">🔔 Notifications</a>
+            <a href="profile.html">👤 Profile</a>
+            <a href="settings.html">⚙️ Settings</a>
+            <a href="support.html">🎧 Support Center</a>
+            <a href="#" onclick="logout()" style="color:#dc3545;">🚪 Logout</a>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <header style="display:flex; justify-content:space-between; align-items:center; padding:15px 0;">
+    <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+
+    <h2 style="margin:0; color:#0d6e2f;">
+        🎁 Daily Login Bonus
+    </h2>
+
+    <div></div>
+</header>
+
+        <div class="card" style="text-align:center;">
+            <h4>Claim Your Free Bonus Today!</h4>
+            <p style="color:#888;">Resets every day at 12:00 AM</p>
+
+            <div id="bonusBox" style="margin:30px 0;">
+                <button class="btn" style="font-size:18px; padding:15px 40px;" onclick="claimBonus()">🎁 Claim ₦20 Now</button>
+            </div>
+
+            <p id="claimedMsg" style="display:none; color:green; font-weight:bold;">✅ Already Claimed Today. Come back tomorrow 12AM!</p>
+            <p id="timer" style="color:#888; font-size:14px;"></p>
+        </div>
+
+        <div class="card" id="bonusHistory">
+            <h4>Bonus History</h4>
+            <p>Loading...</p>
+        </div>
+    </main>
+</div>
+
+<script type="module">
+  import { auth, db } from "./firebase.js";
+
+import {
+    onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+
+import {
+    doc,
+    getDoc,
+    updateDoc,
+    increment,
+    arrayUnion,
+    addDoc,
+    collection,
+    serverTimestamp
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+const DAILY_BONUS = 20;
+
+let currentUser = null;
+// CUSTOM POPUP FUNCTIONS
+function showAlert(title, message, type = "info") {
+    let alertDiv = document.createElement("div");
+    alertDiv.className = "custom-alert";
+    
+    let icon = type === "success"? "✅" : type === "error"? "❌" : "ℹ️";
+    let color = type === "success"? "#198754" : type === "error"? "#dc3545" : "#0d6e2f";
+    
+    alertDiv.innerHTML = `
+        <div class="custom-alert-box" style="border-top:4px solid ${color}">
+            <h3>${icon} ${title}</h3>
+            <p style="white-space:pre-line;">${message}</p>
+            <button class="custom-alert-btn" onclick="this.closest('.custom-alert').remove()">OK</button>
+        </div>
+    `;
+    document.body.appendChild(alertDiv);
+
+    setTimeout(() => {
+        if(document.body.contains(alertDiv)){
+            alertDiv.remove();
+        }
+    }, 3000);
+}
+
+// HELPER FUNCTIONS
+
+
+function getTodayDate() {
+    return new Date().toISOString().split('T')[0]; // YYYY-MM-DD - resets at 12am
+}
+
+onAuthStateChanged(auth, async(user)=>{
+
+    if(!user){
+
+        window.location.href = "login.html";
+
+        return;
+
+    }
+
+    const snap = await getDoc(
+        doc(db,"users",user.uid)
+    );
+
+    if(!snap.exists()){
+
+        showAlert(
+            "Error ❌",
+            "User account not found",
+            "error"
+        );
+
+        return;
+
+    }
+
+    currentUser = {
+        uid:user.uid,
+        ...snap.data()
+    };
+
+    const today = getTodayDate();
+
+    if(currentUser.lastBonusClaim === today){
+
+        document.getElementById("bonusBox").style.display = "none";
+
+        document.getElementById("claimedMsg").style.display = "block";
+
+    }
+
+    updateTimer();
+
+    loadHistory();
+
+});
+
+async function claimBonus() {
+
+    if (!currentUser) {
+
+        showAlert(
+            "Error ❌",
+            "Please login first",
+            "error"
+        );
+
+        return;
+    }
+
+    const today = getTodayDate();
+
+    if (currentUser.lastBonusClaim === today) {
+
+        showAlert(
+            "Already Claimed ⚠️",
+            "You already claimed today's bonus. Check back tomorrow🤩.",
+            "error"
+        );
+
+        return;
+    }
+
+    try {
+
+        const tx = {
+            id: Date.now(),
+            type: "Daily Bonus",
+            amount: DAILY_BONUS,
+            status: "Approved",
+            date: new Date().toLocaleString()
+        };
+
+        await updateDoc(
+            doc(db,"users",auth.currentUser.uid),
+            {
+                balance: increment(DAILY_BONUS),
+
+                lastBonusClaim: today,
+
+                transactions: arrayUnion(tx)
+            }
+        );
+
+        
+
+        currentUser.balance += DAILY_BONUS;
+
+        currentUser.lastBonusClaim = today;
+
+        document.getElementById("bonusBox").style.display="none";
+
+        document.getElementById("claimedMsg").style.display="block";
+
+        loadHistory();
+
+        showAlert(
+            "Bonus Claimed 🎉",
+            `₦${DAILY_BONUS} has been added to your balance.`,
+            "success"
+        );
+
+    } catch(error){
+
+        console.error(error);
+
+        showAlert(
+            "Error ❌",
+            "Unable to claim today's bonus.",
+            "error"
+        );
+
+    }
+
+}
+
+function updateTimer() {
+    let tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0,0,0,0);
+    let diff = tomorrow - new Date();
+    let hours = Math.floor(diff / 1000 / 60 / 60);
+    let mins = Math.floor((diff / 1000 / 60) % 60);
+    let secs = Math.floor((diff / 1000) % 60);
+    document.getElementById('timer').innerText = `Resets in: ${hours}h ${mins}m ${secs}s`;
+    setTimeout(updateTimer, 1000);
+}
+
+async function loadHistory() {
+
+    const box = document.getElementById("bonusHistory");
+
+    box.innerHTML = "<h4>Bonus History</h4>";
+
+    try{
+
+        const snap = await getDoc(
+            doc(db,"users",auth.currentUser.uid)
+        );
+
+        if(!snap.exists()){
+
+            box.innerHTML += "<p>No bonus history.</p>";
+
+            return;
+
+        }
+
+        const data = snap.data();
+
+        let history = (data.transactions || [])
+            .filter(tx => tx.type === "Daily Bonus")
+            .sort((a,b)=>b.id-a.id)
+            .slice(0,5);
+
+        if(history.length === 0){
+
+            box.innerHTML += "<p>No bonus claimed yet</p>";
+
+            return;
+
+        }
+
+        history.forEach(tx=>{
+
+            box.innerHTML += `
+                <p>
+                    ${tx.date} -
+                    ₦${Number(tx.amount).toLocaleString()}
+                </p>
+            `;
+
+        });
+
+    }catch(error){
+
+        console.log(error);
+
+        box.innerHTML += "<p>Unable to load history.</p>";
+
+    }
+
+}
+function toggleSidebar() {
+    document.querySelector(".sidebar").classList.toggle("active");
+}
+function logout(){
+
+    showAlert(
+        "Logged Out 👋",
+        "You have been logged out",
+        "info"
+    );
+
+    setTimeout(()=>{
+        localStorage.removeItem("nnamp_current_user");
+        window.location.href = "login.html";
+    },1500);
+
+}
+
+window.toggleSidebar = toggleSidebar;
+window.claimBonus = claimBonus;
+window.logout = logout;
+</script>
+</body>
+</html>

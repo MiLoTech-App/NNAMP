@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NNAMP - Referrals</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body{ padding-bottom: 80px; background:#f7f9fc; }
+        .menu-toggle { background: #0d6e2f!important; color: white!important; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px!important; border: none; }
+        .card{ background:white; padding:20px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.05); margin-bottom:20px; }
+        .stat-grid{ display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; margin-bottom:20px; }
+        .stat-card{ background:white; padding:15px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.05); text-align:center; }
+        .stat-card h4{ font-size:12px; color:#888; margin:0 0 8px 0; }
+        .stat-card h2{ font-size:20px; color:#0d6e2f; margin:0; }
+        .btn{ background:#0d6e2f; color:white; border:none; padding:12px 20px; border-radius:10px; cursor:pointer; font-weight:bold; width:100%; }
+        .link-box{ display:flex; gap:8px; align-items:center; }
+        .link-box input{ flex:1; padding:12px; border:1px solid #ddd; border-radius:10px; font-size:13px; }
+        .copy-btn{ background:#0d6e2f; color:white; border:none; padding:12px 18px; border-radius:10px; cursor:pointer; font-size:14px; white-space:nowrap; }
+        table{ width:100%; border-collapse:collapse; font-size:13px; }
+        table th, table td{ padding:10px 8px; text-align:left; border-bottom:1px solid #eee; }
+        @media (max-width: 768px){ .main-content{ padding:15px; } .stat-grid{ grid-template-columns: repeat(3, 1fr); }
+
+    /* CUSTOM POPUP - ADDED */
+    .custom-alert {position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 99999; animation: popIn 0.3s ease;}
+    .custom-alert-box {background: white; padding: 25px 20px; border-radius: 15px; text-align: center; width: 90%; max-width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); white-space: pre-line; border-top: 4px solid #0d6e2f;}
+    .custom-alert-box.success { border-top: 4px solid #28a745; }
+    .custom-alert-box.error { border-top: 4px solid #dc3545; }
+    .custom-alert-box h3 { margin: 0 0 10px 0; color: #0d6e2f; font-size: 18px; }
+    .custom-alert-box p { margin: 0 0 15px 0; color: #333; font-size: 14px; }
+    .custom-alert-btn {background: #0d6e2f; color: white; border: none; padding: 10px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; width:100%;}
+    @keyframes popIn { from {transform: scale(0.8); opacity:0;} to {transform: scale(1); opacity:1;} }
+    </style>
+</head>
+<body>
+<div class="dashboard-layout">
+    <aside class="sidebar">
+        <button class="close-sidebar" onclick="toggleSidebar()">✕</button>
+        <div class="logo">NNAMP<span>🇳🇬</span><p>Grow - Invest - Prosper</p></div>
+        <nav>
+            <a href="dashboard.html">🏠 Dashboard</a>
+            <a href="deposit.html">⬇️ Deposit</a>
+            <a href="withdraw.html">⬆️ Withdraw</a>
+            <a href="investments.html">📊 Invest</a>
+            <a href="savings.html">💰 Savings</a>
+            <a href="transactions.html">📄 Transactions</a>
+            <a href="referrals.html" class="active">👥 Referrals</a>
+            <a href="daily-bonus.html">🎁 Daily Bonus</a>
+            <a href="profile.html">👤 Profile</a>
+            <a href="settings.html">⚙️ Settings</a>
+            <a href="support.html">🎧 Support</a>
+            <a href="#" onclick="logout()" style="color:#dc3545;">🚪 Logout</a>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <header style="display:flex; justify-content:space-between; align-items:center; padding:15px 0;">
+            <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+            <div style="text-align:center;"><h2 style="color:#0d6e2f; margin:0;">👥 Referral Program</h2></div>
+            <div></div>
+        </header>
+
+        <p style="color:#666; margin-bottom:20px;">Earn 15% bonus when your referrals invest!</p>
+
+        <!-- STATS -->
+        <div class="stat-grid">
+            <div class="stat-card">
+                <h4>Total Referrals</h4>
+                <h2 id="totalRefs">0</h2>
+            </div>
+            <div class="stat-card">
+                <h4>Bonus Earned</h4>
+                <h2 id="refBonus">₦0</h2>
+            </div>
+            <div class="stat-card">
+                <h4>Active</h4>
+                <h2 id="activeRefs">0</h2>
+            </div>
+        </div>
+
+        <!-- REFERRAL LINK -->
+        <div class="card">
+            <h3 style="color:#0d6e2f; margin-bottom:8px;">Your Referral Link</h3>
+            <p style="font-size:13px; color:#666; margin-bottom:12px;">Share this link. You get 15% of whatever they invest.</p>
+            <div class="link-box">
+                <input type="text" id="refLink" readonly>
+                <button class="copy-btn" onclick="copyLink()">📋 Copy</button>
+            </div>
+        </div>
+
+        <!-- REFERRALS TABLE -->
+        <div class="card">
+            <h3 style="color:#0d6e2f; margin-bottom:15px;">Your Referrals</h3>
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr style="color:#888; font-size:12px;">
+                            <th>Name</th>
+                            <th>Phone</th>
+                            <th>Status</th>
+                            <th>Earned</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="refTableBody"></tbody>
+                </table>
+            </div>
+            <p id="noRefs" style="text-align:center; padding:30px 10px; display:none; color:#888;">You have no referrals yet. Share your link!</p>
+        </div>
+
+    </main>
+</div>
+
+<script type="module">
+
+import { auth, db } from "./firebase.js";
+
+import {
+    onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+
+import {
+    collection,
+    query,
+    where,
+    getDocs,
+    doc,
+    getDoc
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+// ========== CUSTOM POPUP FUNCTIONS - ADDED ==========
+function showAlert(title, message, type = "info") {
+    let alertDiv = document.createElement("div");
+    alertDiv.className = "custom-alert";
+    alertDiv.innerHTML = `
+        <div class="custom-alert-box ${type}">
+            <h3>${title}</h3>
+            <p>${message}</p>
+            <button class="custom-alert-btn" onclick="this.closest('.custom-alert').remove()">OK</button>
+        </div>
+    `;
+    document.body.appendChild(alertDiv);
+    setTimeout(() => { if(document.body.contains(alertDiv)){ alertDiv.remove(); } }, 2000);
+}
+// ========== END POPUP FUNCTIONS ==========
+
+let currentUser = null;
+
+onAuthStateChanged(auth, async (user)=>{
+
+    if(!user){
+        window.location.href = "login.html";
+        return;
+    }
+
+    const snap = await getDoc(
+        doc(db,"users",user.uid)
+    );
+
+    if(!snap.exists()){
+        showAlert("Error ❌","User account not found.","error");
+        return;
+    }
+
+    currentUser = {
+        uid:user.uid,
+        ...snap.data()
+    };
+
+    loadReferrals();
+
+});
+
+function toggleSidebar(){ document.querySelector('.sidebar').classList.toggle('active'); }
+function logout(){
+    showAlert("Logged Out 👋", "You have been logged out", "info");
+    setTimeout(() => {
+        localStorage.removeItem('nnamp_current_user');
+        window.location.href = "login.html";
+    }, 1500);
+}
+window.logout = logout;
+function formatMoney(n){
+  let num = Number(n);
+  if(num === 0) return '₦0';
+  return '₦' + num.toLocaleString('en-NG', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+}
+
+document.addEventListener('DOMContentLoaded', loadReferrals);
+
+async function loadReferrals() {
+    // Generate referral link
+    let link = `https://nnamp.com/ref=${currentUser.phone}`;
+    document.getElementById('refLink').value = link;
+
+    const refQuery = query(
+    collection(db, "referrals"),
+    where("referrerId", "==", currentUser.uid)
+);
+
+const refSnapshot = await getDocs(refQuery);
+
+let referrals = [];
+
+refSnapshot.forEach((docSnap)=>{
+    referrals.push(docSnap.data());
+});
+
+let referralBonus = currentUser.referralBonus || 0;
+
+    document.getElementById('totalRefs').innerText = referrals.length;
+    let totalReferralBonus = referrals.reduce(
+    (total, ref)=>{
+        return total + Number(ref.bonus || 0);
+    },
+    0
+);
+
+document.getElementById('refBonus').innerText = formatMoney(totalReferralBonus);
+    document.getElementById('activeRefs').innerText = referrals.filter(r => r.status === 'Active').length;
+
+    const tbody = document.getElementById('refTableBody');
+    const noRefs = document.getElementById('noRefs');
+    tbody.innerHTML = '';
+
+    if(referrals.length === 0) {
+        noRefs.style.display = 'block';
+        return;
+    }
+    noRefs.style.display = 'none';
+
+    referrals.forEach(ref => {
+        let statusColor = ref.status === 'Active' ? '#0d6e2f' : 'orange';
+        tbody.innerHTML += `
+            <tr>
+                <td>${ref.referredName || "Unknown"}</td>
+
+<td>${ref.referredPhone || ""}</td>
+
+<td>
+<span style="color:${statusColor}; font-weight:bold;">
+${ref.status}
+</span>
+</td>
+
+<td>${formatMoney(ref.bonus || 0)}</td>
+
+<td>
+${
+    ref.createdAt?.toDate 
+    ? ref.createdAt.toDate().toLocaleString()
+    : "Just now"
+}
+</td>
+            </tr>
+        `;
+    });
+}
+
+async function copyLink() {
+
+    const link = document.getElementById("refLink").value;
+
+    try {
+
+        await navigator.clipboard.writeText(link);
+
+        showAlert(
+            "Copied! ✅",
+            "Referral link copied successfully.",
+            "success"
+        );
+
+    } catch(error) {
+
+        console.error("Copy error:", error);
+
+        // fallback for older browsers
+        const input = document.getElementById("refLink");
+        input.select();
+        document.execCommand("copy");
+
+        showAlert(
+            "Copied! ✅",
+            "Referral link copied.",
+            "success"
+        );
+    }
+}
+
+window.copyLink = copyLink;
+window.toggleSidebar = toggleSidebar;
+</script>
+</body>
+</html>

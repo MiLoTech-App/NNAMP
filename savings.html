@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NNAMP - Savings</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+ .menu-toggle {background: #0d6e2f!important; color: white!important; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px!important; border: none;}
+ .close-sidebar {background: #0d6e2f!important; color: white!important; width: 40px; height: 40px; border-radius: 10px; font-size: 22px!important; font-weight: bold; border: none; position: absolute; top: 15px; right: 15px;}
+ .wallet-box{ background: linear-gradient(135deg,#0d6e2f,#198754); color:#fff; padding:20px; border-radius:15px; margin:20px 0; }
+ .wallet-box h3{ margin:5px 0 10px 0; }
+ .plans-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(270px,1fr)); gap:15px; margin:20px 0; }
+ .plan-card{ background:#fff; padding:20px; border-radius:15px; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
+ .calc-box{ background:#e8f5e9; padding:12px; border-radius:8px; margin:10px 0; font-size:13px; display:none; border-left:3px solid #0d6e2f; }
+ .calc-box b{ color:#0d6e2f; }
+ .active-saving{ background:#e8f5e9; border-left:4px solid #0d6e2f; padding:15px; border-radius:8px; margin-bottom:10px; }
+ .completed-saving{ background:#f1f1f1; border-left:4px solid #6c757d; opacity:0.7; }
+
+  /* CUSTOM POPUP STYLES */
+.custom-alert {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center;
+      z-index: 99999; animation: fadeIn 0.2s;
+  }
+.custom-alert-box {
+      background: white; padding: 25px; border-radius: 15px; max-width: 400px; width: 90%;
+      text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3); animation: slideUp 0.3s;
+  }
+.custom-alert-box h3 { margin: 0 0 10px 0; font-size: 18px; color: #0d6e2f; }
+.custom-alert-box p { margin: 0 0 15px 0; color: #555; font-size: 14px; line-height: 1.6; }
+.custom-alert-btn {
+      background: #0d6e2f; color: white; border: none; padding: 12px 25px;
+      border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; font-size: 15px;
+  }
+.custom-alert-btn:hover { opacity: 0.9; }
+  @keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
+  @keyframes slideUp { from {transform:translateY(20px); opacity:0;} to {transform:translateY(0); opacity:1;} }
+    </style>
+</head>
+<body>
+<div class="dashboard-layout">
+    <aside class="sidebar">
+        <button class="close-sidebar" onclick="toggleSidebar()">✕</button>
+        <div class="logo">NNAMP<span>.</span><p>Grow - Invest - Prosper</p></div>
+        <nav>
+            <a href="dashboard.html">🏠 Dashboard</a>
+            <a href="investments.html">📊 Investments</a>
+            <a href="savings.html" class="active">💰 Savings</a>
+            <a href="deposit.html">⬇️ Deposit</a>
+            <a href="withdraw.html">⬆️ Withdraw</a>
+            <a href="transactions.html">📄 Transactions</a>
+            <a href="referrals.html">👥 Referrals</a>
+            <a href="daily-bonus.html">🎁 Daily Bonus</a>
+            <a href="profile.html">👤 Profile</a>
+            <a href="settings.html">⚙️ Settings</a>
+            <a href="support.html">🎧 Support Center</a>
+            <a href="#" onclick="logout()" style="color:#dc3545;">🚪 Logout</a>
+        </nav>
+        <div class="wallet-box">
+            <p>Wallet Balance</p>
+            <h3 id="walletBalance">₦0.00 <span>👁️</span></h3>
+            <a href="deposit.html" class="btn" style="background:#fff; color:#0d6e2f;">⬇️ Deposit Funds</a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header style="display:flex; justify-content:space-between; align-items:center; padding:15px 0;">
+            <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+            <h2 style="color:#0d6e2f; margin:0;">💰 Savings Plans</h2>
+            <div></div>
+        </header>
+
+        <p>Earn daily interest until maturity. Capital + Interest paid at the end.</p>
+
+        <div class="plans-grid">
+            <div class="plan-card" data-days="30" data-rate="10" data-min="1000">
+                <h4>1 Month Plan</h4>
+                <h2 style="color:#0d6e2f;">10% Daily</h2>
+                <p><b>Lock Period:</b> 30 Days</p>
+                <p><b>Min Amount:</b> ₦1,000 ~ ₦2,000,000</p>
+                <input type="number" class="amountInput" placeholder="Enter Amount" style="width:100%; padding:10px; margin:10px 0; border:1px solid #ddd; border-radius:8px;">
+                <div class="calc-box">
+                    <p><b>Daily Earning:</b> <span class="dailyEarn">₦0.00</span></p>
+                    <p><b>Total After 30 Days:</b> <span class="totalReturn">₦0.00</span></p>
+                </div>
+                <button class="btn startSaving">Start Saving</button>
+            </div>
+            <div class="plan-card" data-days="90" data-rate="15" data-min="5000">
+                <h4>3 Months Plan</h4>
+                <h2 style="color:#e91e63;">15% Daily</h2>
+                <p><b>Lock Period:</b> 90 Days</p>
+                <p><b>Min Amount:</b> ₦5,000 ~ ₦10,000,000</p>
+                <input type="number" class="amountInput" placeholder="Enter Amount" style="width:100%; padding:10px; margin:10px 0; border:1px solid #ddd; border-radius:8px;">
+                <div class="calc-box">
+                    <p><b>Daily Earning:</b> <span class="dailyEarn">₦0.00</span></p>
+                    <p><b>Total After 90 Days:</b> <span class="totalReturn">₦0.00</span></p>
+                </div>
+                <button class="btn startSaving">Start Saving</button>
+            </div>
+            <div class="plan-card" data-days="180" data-rate="20" data-min="10000">
+                <h4>6 Months Plan</h4>
+                <h2 style="color:#ffc107;">20% Daily</h2>
+                <p><b>Lock Period:</b> 180 Days</p>
+                <p><b>Min Amount:</b> ₦10,000~₦10,000,000</p>
+                <input type="number" class="amountInput" placeholder="Enter Amount" style="width:100%; padding:10px; margin:10px 0; border:1px solid #ddd; border-radius:8px;">
+                <div class="calc-box">
+                    <p><b>Daily Earning:</b> <span class="dailyEarn">₦0.00</span></p>
+                    <p><b>Total After 180 Days:</b> <span class="totalReturn">₦0.00</span></p>
+                </div>
+                <button class="btn startSaving">Start Saving</button>
+            </div>
+            <div class="plan-card" data-days="365" data-rate="25" data-min="20000">
+                <h4>1 Year Plan</h4>
+                <h2 style="color:#dc3545;">25% Daily</h2>
+                <p><b>Lock Period:</b> 365 Days</p>
+                <p><b>Min Amount:</b> ₦20,000~₦20,000,000</p>
+                <input type="number" class="amountInput" placeholder="Enter Amount" style="width:100%; padding:10px; margin:10px 0; border:1px solid #ddd; border-radius:8px;">
+                <div class="calc-box">
+                    <p><b>Daily Earning:</b> <span class="dailyEarn">₦0.00</span></p>
+                    <p><b>Total After 365 Days:</b> <span class="totalReturn">₦0.00</span></p>
+                </div>
+                <button class="btn startSaving">Start Saving</button>
+            </div>
+        </div>
+
+        <h3 style="margin-top:40px;">My Savings History</h3>
+        <div id="activeSavingsList" class="card">
+            <p>No savings yet. Choose a plan above to start earning.</p>
+        </div>
+
+    </main>
+</div>
+
+<script type="module">
+  import { auth, db } from "./firebase.js";
+
+import {
+    onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+
+import {
+    doc,
+    getDoc,
+    updateDoc
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+// CUSTOM POPUP FUNCTIONS
+function showAlert(title, message, type = "info") {
+    let alertDiv = document.createElement("div");
+    alertDiv.className = "custom-alert";
+    let icon = type === "success"? "✅" : type === "error"? "❌" : "ℹ️";
+    let color = type === "success"? "#198754" : type === "error"? "#dc3545" : "#0d6e2f";
+    alertDiv.innerHTML = `
+        <div class="custom-alert-box" style="border-top:4px solid ${color}">
+            <h3>${icon} ${title}</h3>
+            <p style="white-space:pre-line;">${message}</p>
+            <button class="custom-alert-btn" onclick="this.closest('.custom-alert').remove()">OK</button>
+        </div>
+    `;
+    document.body.appendChild(alertDiv);
+    setTimeout(() => { if(document.body.contains(alertDiv)){ alertDiv.remove(); } }, 3000);
+}
+
+function showConfirm(title, message, onConfirm) {
+    let confirmDiv = document.createElement("div");
+    confirmDiv.className = "custom-alert";
+    confirmDiv.innerHTML = `
+        <div class="custom-alert-box info">
+            <h3>${title}</h3>
+            <p style="white-space:pre-line;">${message}</p>
+            <div style="display:flex; gap:10px; margin-top:15px;">
+                <button class="custom-alert-btn" style="background:#6c757d; flex:1;" onclick="this.closest('.custom-alert').remove()">Cancel</button>
+                <button class="custom-alert-btn" id="confirmYesBtn" style="background:#0d6e2f; flex:1;">OK</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(confirmDiv);
+    document.getElementById('confirmYesBtn').onclick = function(){
+        confirmDiv.remove();
+        if(onConfirm) onConfirm();
+    }
+}
+
+
+
+let currentUser = null;
+
+onAuthStateChanged(auth, async (user) => {
+
+    if (!user) {
+        window.location.href = "login.html";
+        return;
+    }
+
+    const snap = await getDoc(
+        doc(db, "users", user.uid)
+    );
+
+    if (!snap.exists()) {
+        showAlert(
+            "Error ❌",
+            "User not found.",
+            "error"
+        );
+        return;
+    }
+
+    currentUser = {
+        uid: user.uid,
+        ...snap.data()
+    };
+
+    checkMaturedSavings();
+
+    document.getElementById("walletBalance").innerText =
+        formatMoney(currentUser.balance || 0);
+
+    loadActiveSavings();
+
+});
+
+function toggleSidebar(){ document.querySelector('.sidebar').classList.toggle('active'); }
+function logout(){
+    showAlert("Logged Out 👋", "You have been logged out successfully", "info");
+    setTimeout(() => {
+        localStorage.removeItem('nnampCurrentUser');
+        window.location.href = "login.html";
+    }, 1500);
+}
+
+
+async function saveUserToStorage(){
+
+    if(!currentUser) return;
+
+    const userRef = doc(db, "users", currentUser.uid);
+
+    const data = {...currentUser};
+
+    delete data.uid;
+
+    await updateDoc(userRef, data);
+
+}
+
+function formatMoney(n){ return '₦' + Number(n).toLocaleString('en-NG', {minimumFractionDigits:2}); }
+
+// AUTO CHECK MATURITY - NEW
+function checkMaturedSavings(){
+    if(!currentUser.savings || currentUser.savings.length === 0) return;
+    let matured = [];
+    let today = new Date();
+
+    currentUser.savings.forEach(s => {
+        if(s.status === "Active"){
+            let maturityDate = new Date(s.maturityDate);
+            if(today >= maturityDate){
+                currentUser.balance += s.totalReturn;
+                s.status = "Completed";
+                s.completedDate = today.toISOString();
+                matured.push(s);
+                addTransaction('Savings Payout', s.totalReturn, 'Approved', `${s.plan} Matured - Capital + Interest`);
+            }
+        }
+    });
+
+    if(matured.length > 0){
+        saveUserToStorage();
+        let totalPaid = matured.reduce((sum, s) => sum + s.totalReturn, 0);
+        showAlert("Congratulations 🎉", `${matured.length} Savings plan(s) matured.\n${formatMoney(totalPaid)} has been credited to your balance.`, "success");
+    }
+}
+
+window.onload = function(){};
+
+// AUTO CALCULATION
+document.querySelectorAll('.amountInput').forEach(input => {
+    input.addEventListener('input', function(){
+        let card = this.closest('.plan-card');
+        let amount = parseFloat(this.value) || 0;
+        let rate = parseInt(card.dataset.rate);
+        let days = parseInt(card.dataset.days);
+        let calcBox = card.querySelector('.calc-box');
+
+        if(amount > 0){
+            let daily = amount * (rate / 100);
+            let total = amount + (daily * days);
+            card.querySelector('.dailyEarn').innerText = formatMoney(daily);
+            card.querySelector('.totalReturn').innerText = formatMoney(total);
+            calcBox.style.display = 'block';
+        } else {
+            calcBox.style.display = 'none';
+        }
+    });
+});
+
+// CREATE SAVINGS
+document.querySelectorAll('.startSaving').forEach(btn => {
+    btn.addEventListener('click', function() {
+        let card = this.closest('.plan-card');
+        let input = card.querySelector('.amountInput');
+        let amount = parseFloat(input.value);
+        let days = parseInt(card.dataset.days);
+        let rate = parseInt(card.dataset.rate);
+        let min = parseInt(card.dataset.min);
+        let planName = card.querySelector('h4').innerText;
+
+        let available = currentUser.balance - (currentUser.lockedBonus || 0);
+
+        if(!amount || amount < min) {
+            showAlert("Invalid Amount ❌", `Minimum amount for ${planName} is ${formatMoney(min)}`, "error");
+            return;
+        }
+        if(amount > available){
+            showAlert("Insufficient Balance ❌", `Available: ${formatMoney(available)}`, "error");
+            return;
+        }
+
+        // FIXED: REPLACED CONFIRM WITH BEAUTIFUL POPUP
+        showConfirm(
+            "Confirm Savings Lock",
+            `Lock ${formatMoney(amount)} for ${days} days at ${rate}% daily?`,
+            async function() {
+                currentUser.balance -= amount;
+                if(!currentUser.savings) currentUser.savings = [];
+                let startDate = new Date();
+                let maturityDate = new Date();
+                maturityDate.setDate(startDate.getDate() + days);
+                let dailyEarn = amount * (rate / 100);
+                let totalReturn = amount + (dailyEarn * days);
+
+                currentUser.savings.push({
+                    id: Date.now(), plan: planName, amount: amount, rate: rate, days: days, dailyEarn: dailyEarn,
+                    startDate: startDate.toISOString(), maturityDate: maturityDate.toISOString(),
+                    totalReturn: totalReturn, status: "Active"
+                });
+
+                await saveUserToStorage();
+                addTransaction('Savings', -amount, 'Approved', `Started ${planName} - ₦${amount}`);
+
+                showAlert("Savings Started ✅", `Success! ${formatMoney(amount)} locked in ${planName}.\nDaily: ${formatMoney(dailyEarn)}\nMatures: ${maturityDate.toLocaleDateString()}`, "success");
+                input.value = ''; card.querySelector('.calc-box').style.display = 'none';
+                document.getElementById('walletBalance').innerText = formatMoney(currentUser.balance);
+                loadActiveSavings();
+            }
+        );
+    });
+});
+
+function loadActiveSavings(){
+    let list = document.getElementById('activeSavingsList');
+    if(!currentUser.savings || currentUser.savings.length === 0){
+        list.innerHTML = '<p>No savings yet. Choose a plan above to start earning.</p>'; return;
+    }
+    list.innerHTML = '';
+    currentUser.savings.sort((a,b) => new Date(b.startDate) - new Date(a.startDate)).forEach(s => {
+        let maturity = new Date(s.maturityDate);
+        let daysLeft = Math.ceil((maturity - new Date()) / (1000 * 60 * 60 * 24));
+        if(daysLeft < 0) daysLeft = 0;
+
+        let statusColor = s.status === "Active"? "#0d6e2f" : "#6c757d";
+        let statusText = s.status === "Active"? `Days Left: ${daysLeft}` : "Completed & Paid";
+        let cardClass = s.status === "Active"? "active-saving" : "active-saving completed-saving";
+
+        list.innerHTML += `
+        <div class="${cardClass}">
+            <p><b>${s.plan}</b> - <span style="color:${statusColor}">${s.status}</span></p>
+            <p><b>Amount:</b> ${formatMoney(s.amount)} | <b>Daily:</b> ${formatMoney(s.dailyEarn)}</p>
+            <p><b>Return:</b> ${formatMoney(s.totalReturn)} | <b>Matures:</b> ${maturity.toLocaleDateString()} | <b>${statusText}</b></p>
+        </div>`;
+    });
+}
+
+function addTransaction(type, amount, status, note){
+    if(!currentUser.transactions) currentUser.transactions = [];
+    currentUser.transactions.unshift({id: Date.now(), type, amount: parseFloat(amount), status, date: new Date().toLocaleString(), note});
+    saveUserToStorage();
+}
+window.toggleSidebar = toggleSidebar;
+window.logout = logout;
+</script>
+
+</body>
+</html>
