@@ -191,7 +191,7 @@ document.addEventListener('DOMContentLoaded', loadReferrals);
 async function loadReferrals() {
 
     // Generate referral link automatically
-    let link = `${window.location.origin}/signup.html?ref=${currentUser.phone}`;
+    let link = `${window.location.origin}/?ref=${currentUser.phone}`;
 
     document.getElementById('refLink').value = link;
 
