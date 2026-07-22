@@ -91,8 +91,13 @@ function showAlert(title, message, type = "info") {
 
 window.onload = function() {
     const urlParams = new URLSearchParams(window.location.search);
-    const ref = urlParams.get('ref');
-    if(ref) {
+    let ref = urlParams.get('ref');
+
+    if (!ref) {
+        ref = localStorage.getItem('referralCode');
+    }
+
+    if (ref) {
         document.getElementById('referralCode').value = ref;
     }
 }
@@ -206,6 +211,7 @@ try {
 
 });
 
+localStorage.removeItem("referralCode");
     showAlert(
         "Welcome to NNAMP 🎉",
         "Account created successfully!",
