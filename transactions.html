@@ -97,7 +97,7 @@ import { auth, db } from "./firebase.js";
 import {
     onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-
+import { initSessionManager } from "./session.js";
 import {
     collection,
     query,
@@ -106,6 +106,7 @@ import {
     doc,
     getDoc
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+initSessionManager(auth);
 function toggleSidebar(){ document.querySelector('.sidebar').classList.toggle('active'); }
 
 // NEW: USE SAME KEYS AS DASHBOARD
@@ -211,5 +212,57 @@ onAuthStateChanged(auth, async (user) => {
 window.toggleSidebar = toggleSidebar;
 window.filterTx = filterTx;
 </script>
+<!-- NNAMP AUTO LOGOUT POPUP -->
+
+<div id="logoutOverlay" class="logout-overlay">
+
+    <div class="logout-box">
+
+        <div class="logout-lock">
+            🔒
+        </div>
+
+        <h2>Security Notice</h2>
+
+        <p>
+            You have been inactive.<br>
+            For your security,<br>
+            you will be logged out automatically.
+        </p>
+
+        <div class="countdown-container">
+
+            <svg class="countdown-circle" width="130" height="130">
+
+                <circle
+                    class="circle-background"
+                    cx="65"
+                    cy="65"
+                    r="55">
+                </circle>
+
+                <circle
+                    id="circleProgress"
+                    class="circle-progress"
+                    cx="65"
+                    cy="65"
+                    r="55">
+                </circle>
+
+            </svg>
+
+            <span id="countdownNumber">5</span>
+
+        </div>
+
+
+        <button id="stayLoggedInBtn">
+            Stay Logged In
+        </button>
+
+
+    </div>
+
+</div>
 </body>
 </html>

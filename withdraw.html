@@ -118,10 +118,13 @@ import {
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
+import { initSessionManager } from "./session.js";
+
 import {
     onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-  
+initSessionManager(auth);
+
 function getUsers() { return JSON.parse(localStorage.getItem('nnampUsers')) || []; }
 function saveUsers(users) { localStorage.setItem('nnampUsers', JSON.stringify(users)); }
 
@@ -361,5 +364,57 @@ window.logout = logout;
 window.calculateFee = calculateFee;
 window.showAlert = showAlert;
 </script>
+<!-- NNAMP AUTO LOGOUT POPUP -->
+
+<div id="logoutOverlay" class="logout-overlay">
+
+    <div class="logout-box">
+
+        <div class="logout-lock">
+            🔒
+        </div>
+
+        <h2>Security Notice</h2>
+
+        <p>
+            You have been inactive.<br>
+            For your security,<br>
+            you will be logged out automatically.
+        </p>
+
+        <div class="countdown-container">
+
+            <svg class="countdown-circle" width="130" height="130">
+
+                <circle
+                    class="circle-background"
+                    cx="65"
+                    cy="65"
+                    r="55">
+                </circle>
+
+                <circle
+                    id="circleProgress"
+                    class="circle-progress"
+                    cx="65"
+                    cy="65"
+                    r="55">
+                </circle>
+
+            </svg>
+
+            <span id="countdownNumber">5</span>
+
+        </div>
+
+
+        <button id="stayLoggedInBtn">
+            Stay Logged In
+        </button>
+
+
+    </div>
+
+</div>
 </body>
 </html>

@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>NNAMP - Grow • Invest • Prosper</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
@@ -49,7 +51,7 @@
         .hero {
             background: linear-gradient(135deg, #0d6e2f, #198754);
             color: white;
-            padding: 35px 5%;
+            padding: 45px 5% 35px;
             text-align: center;
         }
         .hero h1 { font-size: 28px; margin-bottom: 10px; }
@@ -149,10 +151,160 @@
             .about p { font-size: 14px; }
             .scroll-arrow { font-size: 35px; margin-top: 15px; }
         }
+        @media (max-width: 480px) {
+
+    header {
+        flex-direction: column;
+        gap: 10px;
+        padding: 15px;
+    }
+
+    .nav-btns {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+
+    .nav-btns a {
+        flex: 1;
+        text-align: center;
+        margin: 0 5px;
+    }
+
+    .hero h1 {
+        font-size: 20px;
+    }
+
+}
+/* ==========================
+   NNAMP SPLASH SCREEN
+========================== */
+
+#splash-screen{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:linear-gradient(135deg,#0d6e2f,#198754);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:99999;
+    transition:opacity .8s ease;
+}
+
+.splash-content{
+    text-align:center;
+    color:white;
+    animation:logoZoom 2s ease-in-out;
+}
+
+.splash-content h1{
+    font-size:42px;
+    font-weight:bold;
+    letter-spacing:2px;
+    margin-bottom:10px;
+}
+
+.splash-content p{
+    font-size:18px;
+    opacity:.9;
+    margin-bottom:35px;
+}
+
+.loader{
+    display:flex;
+    justify-content:center;
+    gap:10px;
+}
+
+.loader span{
+    width:14px;
+    height:14px;
+    background:#fff;
+    border-radius:50%;
+    animation:bounce 0.8s infinite alternate;
+}
+
+.loader span:nth-child(2){
+    animation-delay:.2s;
+}
+
+.loader span:nth-child(3){
+    animation-delay:.4s;
+}
+
+@keyframes bounce{
+
+    from{
+        transform:translateY(0);
+        opacity:.5;
+    }
+
+    to{
+        transform:translateY(-12px);
+        opacity:1;
+    }
+
+}
+
+.fade-out{
+    opacity:0;
+    transform:scale(1.08);
+    transition:all .8s ease;
+    pointer-events:none;
+}
+@keyframes logoZoom{
+
+    0%{
+        transform:scale(.8);
+        opacity:0;
+    }
+
+    50%{
+        transform:scale(1.08);
+        opacity:1;
+    }
+
+    100%{
+        transform:scale(1);
+        opacity:1;
+    }
+
+}
+.splash-footer{
+    position:absolute;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%);
+    font-size:15px;
+    color:rgba(255,255,255,0.85);
+    width:100%;
+    text-align:center;
+    white-space:nowrap;
+    letter-spacing:0.3px;
+}
     </style>
 </head>
 <body>
+<div id="splash-screen">
+    <div class="splash-content">
+        <h1>NNAMP🇳🇬</h1>
+        <p>Grow • Invest • Prosper</p>
 
+        <div class="loader">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </div>
+    <p class="splash-footer">
+    © 2025 NNAMP. All Rights Reserved.
+</p>
+</div>
+
+<div id="main-content" style="display:none;">
     <div class="bonus-banner">
         🎁Sign Up Now & Get ₦1,000 Instant Bonus!🎁
     </div>
@@ -199,6 +351,34 @@
     </section>
 
     <footer><p>© 2025 NNAMP. All Rights Reserved. Grow • Invest • Prosper</p></footer>
+<script>
 
+window.addEventListener("load",()=>{
+
+    setTimeout(()=>{
+
+        document
+        .getElementById("splash-screen")
+        .classList
+        .add("fade-out");
+
+        setTimeout(()=>{
+
+            document
+            .getElementById("splash-screen")
+            .style.display="none";
+
+            document
+            .getElementById("main-content")
+            .style.display="block";
+
+        },800);
+
+    },3000);
+
+});
+
+</script>
 </body>
+</div>
 </html>

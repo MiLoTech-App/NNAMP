@@ -55,6 +55,11 @@
   .custom-alert-box p { margin: 0 0 15px 0; color: #333; font-size: 14px; }
   .custom-alert-btn {background: #0d6e2f; color: white; border: none; padding: 10px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; width:100%;}
     @keyframes popIn { from {transform: scale(0.8); opacity:0;} to {transform: scale(1); opacity:1;} }
+    input,
+textarea,
+select {
+    font-size: 16px;
+}
     </style>
 </head>
 <body>
@@ -110,8 +115,8 @@
                 <a href="deposit.html" style="background:#e8f5e9; padding:15px 10px; border-radius:12px; text-align:center; text-decoration:none; color:#333;"><div style="font-size:24px;">⬇️</div><b>Deposit</b><p style="font-size:11px; color:#888;">Fund Account</p></a>
                 <a href="withdraw.html" style="background:#ffebee; padding:15px 10px; border-radius:12px; text-align:center; text-decoration:none; color:#333;"><div style="font-size:24px;">⬆️</div><b>Withdraw</b><p style="font-size:11px; color:#888;">Withdraw Funds</p></a>
                 <a href="investments.html" style="background:#e8f5e9; padding:15px 10px; border-radius:12px; text-align:center; text-decoration:none; color:#333;"><div style="font-size:24px;">📊</div><b>Investments</b><p style="font-size:11px; color:#888;">Grow Wealth</p></a>
-                <a href="savings.html" style="background:#e8f5e9; padding:15px 10px; border-radius:12px; text-align:center; text-decoration:none; color:#333;"><div style="font-size:24px;">💰</div><b>Savings</b><p style="font-size:11px; color:#888;">Save & Earn</p></a>
-                <a href="referrals.html" style="background:#ffebee; padding:15px 10px; border-radius:12px; text-align:center; text-decoration:none; color:#333;"><div style="font-size:24px;">👥</div><b>Referrals</b><p style="font-size:11px; color:#888;">Invite & Earn</p></a>
+                <a href="savings.html" style="background:#e8f5e9; padding:15px 10px; border-radius:12px; text-align:center; text-decoration:none; color:#333;"><div style="font-size:24px;">💰</div><b>Savings</b><p style="font-size:11px; color:#888;">Save & Earn up to 25% daily</p></a>
+                <a href="referrals.html" style="background:#ffebee; padding:15px 10px; border-radius:12px; text-align:center; text-decoration:none; color:#333;"><div style="font-size:24px;">👥</div><b>Referrals</b><p style="font-size:11px; color:#888;">Invite & Earn up to ₦75,000</p></a>
                 <a href="daily-bonus.html" style="background:#fff8e1; padding:15px 10px; border-radius:12px; text-align:center; text-decoration:none; color:#333;"><div style="font-size:24px;">🎁</div><b>Bonuses</b><p style="font-size:11px; color:#888;">Daily Bonus</p></a>
             </div>
 
@@ -130,6 +135,26 @@
                 <div class="plan-card"><h4>🥇 Gold Plan</h4><h2>7% Daily Return</h2><p>Min: ₦100,000</p><button class="btn" onclick="buyPlan('Gold Plan', 100000, 0.07)">Invest Now</button></div>
                 <div class="plan-card"><h4>💎 Platinum Plan</h4><h2>7% Daily Return</h2><p>Min: ₦200,000</p><button class="btn" onclick="buyPlan('Platinum Plan', 200000, 0.07)">Invest Now</button></div>
                 <div class="plan-card"><h4>👑 Premium Plan</h4><h2>7% Daily Return</h2><p>Min: ₦500,000</p><button class="btn" onclick="buyPlan('Premium Plan', 500000, 0.07)">Invest Now</button></div>
+                <div class="plan-card">
+    <h4>🏆 Elite Plan</h4>
+    <h2>7% Daily Return</h2>
+    <p>Min: ₦1,000,000</p>
+    <button class="btn"
+        onclick="buyPlan('Elite Plan', 1000000, 0.07)">
+        Invest Now
+    </button>
+</div>
+                   <div class="plan-card">
+    <h4>💼 Executive Plan</h4>
+    <h2>7% Daily Return</h2>
+
+    <p>Min: ₦2,000,000</p>
+
+    <button class="btn"
+        onclick="buyPlan('Executive Plan', 2000000, 0.07)">
+        Invest Now
+    </button>
+</div>
             </div>
 
             <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:10px; margin:20px 0;">
@@ -153,6 +178,8 @@
 <script type="module">
 import { auth, db } from "./firebase.js";
 
+import { initSessionManager } from "./session.js";
+
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 
 import {
@@ -170,6 +197,7 @@ import {
     orderBy,
     arrayUnion
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+initSessionManager(auth);
 // ========== CUSTOM POPUP FUNCTIONS - ADDED ==========
 function showAlert(title, message, type = "info") {
 
@@ -573,5 +601,57 @@ document.getElementById("eyeIcon").addEventListener("click", function () {
     toggleBalance();
 });
 </script>
+<!-- NNAMP AUTO LOGOUT POPUP -->
+
+<div id="logoutOverlay" class="logout-overlay">
+
+    <div class="logout-box">
+
+        <div class="logout-lock">
+            🔒
+        </div>
+
+        <h2>Security Notice</h2>
+
+        <p>
+            You have been inactive.<br>
+            For your security,<br>
+            you will be logged out automatically.
+        </p>
+
+        <div class="countdown-container">
+
+            <svg class="countdown-circle" width="130" height="130">
+
+                <circle
+                    class="circle-background"
+                    cx="65"
+                    cy="65"
+                    r="55">
+                </circle>
+
+                <circle
+                    id="circleProgress"
+                    class="circle-progress"
+                    cx="65"
+                    cy="65"
+                    r="55">
+                </circle>
+
+            </svg>
+
+            <span id="countdownNumber">5</span>
+
+        </div>
+
+
+        <button id="stayLoggedInBtn">
+            Stay Logged In
+        </button>
+
+
+    </div>
+
+</div>
 </body>
 </html>

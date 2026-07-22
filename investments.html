@@ -90,6 +90,37 @@
                 <div class="plan-card"><h4>🥇 Gold Plan</h4><h2>7% Daily Return</h2><p><b>Min:</b> ₦100,000</p><p><b>Duration:</b> 100 Days</p><p><b>Daily Profit:</b> ₦7,000</p><p><b>Total Profit:</b> ₦700,000</p><button class="btn" onclick="buyPlan('Gold Plan', 100000, 0.07)">Invest Now</button></div>
                 <div class="plan-card"><h4>💎 Platinum Plan</h4><h2>7% Daily Return</h2><p><b>Min:</b> ₦200,000</p><p><b>Duration:</b> 100 Days</p><p><b>Daily Profit:</b> ₦14,000</p><p><b>Total Profit:</b> ₦1,400,000</p><button class="btn" onclick="buyPlan('Platinum Plan', 200000, 0.07)">Invest Now</button></div>
                 <div class="plan-card"><h4>👑 Premium Plan</h4><h2>7% Daily Return</h2><p><b>Min:</b> ₦500,000</p><p><b>Duration:</b> 100 Days</p><p><b>Daily Profit:</b> ₦35,000</p><p><b>Total Profit:</b> ₦3,500,000</p><button class="btn" onclick="buyPlan('Premium Plan', 500000, 0.07)">Invest Now</button></div>
+                <div class="plan-card">
+    <h4>🏆 Elite Plan</h4>
+    <h2>7% Daily Return</h2>
+
+    <p><b>Min:</b> ₦1,000,000</p>
+
+    <p><b>Duration:</b> 100 Days</p>
+
+    <p><b>Daily Profit:</b> ₦70,000</p>
+
+    <p><b>Total Profit:</b> ₦7,000,000</p>
+
+    <button class="btn"
+        onclick="buyPlan('Elite Plan', 1000000, 0.07)">
+        Invest Now
+    </button>
+</div>
+                   <div class="plan-card">
+    <h4>💼 Executive Plan</h4>
+    <h2>7% Daily Return</h2>
+
+    <p><b>Min:</b> ₦2,000,000</p>
+    <p><b>Duration:</b> 100 Days</p>
+    <p><b>Daily Profit:</b> ₦140,000</p>
+    <p><b>Total Profit:</b> ₦14,000,000</p>
+
+    <button class="btn"
+        onclick="buyPlan('Executive Plan', 2000000, 0.07)">
+        Invest Now
+    </button>
+</div>
             </div>
         </div>
 
@@ -105,6 +136,8 @@
 
 <script type="module">
   import { auth, db } from "./firebase.js";
+  
+  import { initSessionManager } from "./session.js";
 
 import {
     onAuthStateChanged,
@@ -126,6 +159,7 @@ import {
     Timestamp,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+initSessionManager(auth);
 async function saveUser(userData) {
     await updateDoc(
         doc(db, "users", auth.currentUser.uid),
@@ -549,5 +583,57 @@ window.markAllRead = markAllRead;
 </script>
 
 <script src="script.js"></script>
+<!-- NNAMP AUTO LOGOUT POPUP -->
+
+<div id="logoutOverlay" class="logout-overlay">
+
+    <div class="logout-box">
+
+        <div class="logout-lock">
+            🔒
+        </div>
+
+        <h2>Security Notice</h2>
+
+        <p>
+            You have been inactive.<br>
+            For your security,<br>
+            you will be logged out automatically.
+        </p>
+
+        <div class="countdown-container">
+
+            <svg class="countdown-circle" width="130" height="130">
+
+                <circle
+                    class="circle-background"
+                    cx="65"
+                    cy="65"
+                    r="55">
+                </circle>
+
+                <circle
+                    id="circleProgress"
+                    class="circle-progress"
+                    cx="65"
+                    cy="65"
+                    r="55">
+                </circle>
+
+            </svg>
+
+            <span id="countdownNumber">5</span>
+
+        </div>
+
+
+        <button id="stayLoggedInBtn">
+            Stay Logged In
+        </button>
+
+
+    </div>
+
+</div>
 </body>
 </html>

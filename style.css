@@ -599,3 +599,327 @@ overflow-y: auto;
 
 @keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
 @keyframes slideUp { from {transform:translateY(20px); opacity:0;} to {transform:translateY(0); opacity:1;} }
+/* =====================================
+   NNAMP AUTO LOGOUT POPUP
+===================================== */
+
+.logout-overlay {
+
+    position: fixed;
+    inset: 0;
+
+    background: rgba(0,0,0,0.55);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    opacity: 0;
+    visibility: hidden;
+
+    transition: all 0.35s ease;
+
+    z-index: 99999;
+
+    backdrop-filter: blur(5px);
+}
+
+
+.logout-overlay.show {
+
+    opacity: 1;
+    visibility: visible;
+
+}
+
+
+/* Popup Box */
+
+.logout-box {
+
+    width: 90%;
+    max-width: 380px;
+
+    background: #ffffff;
+
+    border-radius: 22px;
+
+    padding: 30px 25px;
+
+    text-align: center;
+
+    box-shadow:
+    0 20px 50px rgba(0,0,0,0.25);
+
+    transform: translateY(80px) scale(0.85);
+
+    opacity: 0;
+
+    transition:
+    transform 0.45s cubic-bezier(.17,.67,.38,1.3),
+    opacity 0.35s ease;
+
+    
+
+}
+
+
+.logout-overlay.show .logout-box {
+
+    transform: translateY(0) scale(1);
+
+    opacity: 1;
+
+}
+
+
+/* Lock Icon */
+
+.logout-lock {
+
+    font-size: 40px;
+
+    margin-bottom: 10px;
+
+}
+
+
+/* Title */
+
+.logout-box h2 {
+
+    margin: 10px 0;
+
+    color: #0b7a3b;
+
+    font-size: 22px;
+
+}
+
+
+/* Text */
+
+.logout-box p {
+
+    color: #555;
+
+    line-height: 1.6;
+
+    font-size: 15px;
+
+}
+
+
+
+/* Countdown Circle */
+
+.countdown-container {
+
+    position: relative;
+
+    width: 130px;
+
+    height: 130px;
+
+    margin: 25px auto;
+
+}
+
+
+
+.countdown-circle {
+
+    transform: rotate(-90deg);
+
+}
+
+
+/* Background Circle */
+
+.circle-background {
+
+    fill: none;
+
+    stroke: #e8e8e8;
+
+    stroke-width: 10;
+
+}
+
+
+/* Moving Circle */
+
+.circle-progress {
+
+    fill: none;
+
+    stroke: #0b7a3b;
+
+    stroke-width: 10;
+
+    stroke-linecap: round;
+
+    stroke-dasharray: 345;
+
+    stroke-dashoffset: 0;
+
+    animation: rotateCircle 5s linear infinite;
+
+}
+
+
+/* Number */
+
+#countdownNumber {
+
+    position: absolute;
+
+    inset: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    font-size: 42px;
+
+    font-weight: bold;
+
+    color: #0b7a3b;
+
+}
+
+
+
+/* Button */
+
+#stayLoggedInBtn {
+
+    width: 100%;
+
+    padding: 14px;
+
+    border: none;
+
+    border-radius: 12px;
+
+    background: #0b7a3b;
+
+    color: white;
+
+    font-size: 16px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+}
+
+
+#stayLoggedInBtn:active {
+
+    transform: scale(0.97);
+
+}
+
+
+
+/* Circle Animation */
+
+@keyframes rotateCircle {
+
+    from {
+
+        stroke-dashoffset: 0;
+
+    }
+
+    to {
+
+        stroke-dashoffset: 345;
+
+    }
+
+}
+
+
+
+/* Mobile Adjustment */
+
+@media(max-width:480px){
+
+    .logout-box {
+
+        width: 92%;
+
+        padding: 25px 18px;
+
+    }
+
+
+    .logout-box h2 {
+
+        font-size: 20px;
+
+    }
+
+
+    .logout-box p {
+
+        font-size: 14px;
+
+    }
+
+}
+/* =====================================
+   NNAMP COUNTDOWN NUMBER ANIMATION
+===================================== */
+
+#countdownNumber {
+
+    animation: countdownPulse 1s ease infinite;
+
+}
+
+
+@keyframes countdownPulse {
+
+    0% {
+
+        transform: scale(1);
+
+        opacity: 1;
+
+    }
+
+
+    50% {
+
+        transform: scale(1.18);
+
+        opacity: 0.75;
+
+    }
+
+
+    100% {
+
+        transform: scale(1);
+
+        opacity: 1;
+
+    }
+
+}
+input,
+textarea,
+select {
+    font-size: 16px !important;
+}
+input,
+textarea,
+select {
+    -webkit-appearance: none;
+    border-radius: 8px;
+}
