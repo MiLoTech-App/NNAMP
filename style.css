@@ -59,7 +59,11 @@ body{
     padding: 20px;
     min-height: 100vh;
 }
-.container{ max-width: 900px; margin: 0 auto; padding: 20px; }
+.container {
+    max-width: 900px;
+    margin: -10px auto 0;
+    padding: 20px;
+}
 h1, h2, h3{ color: var(--primary-color); margin-bottom: 15px; }
 p{ color: var(--text-secondary); margin-bottom: 10px; }
 a{ color: var(--primary-color); font-weight: bold; }

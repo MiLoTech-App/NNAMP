@@ -314,27 +314,7 @@ function formatMoney(n){
   if(num === 0) return '₦0';
   return '₦' + num.toLocaleString('en-NG', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 }
-function resizeBalance() {
-    const balance = document.getElementById("balanceAmount");
-    if (!balance) return;
 
-    const text = balance.innerText;
-
-    // Restore normal size first
-    balance.style.fontSize = "28px";
-
-    if (text.length >= 12) {
-        balance.style.fontSize = "26px";
-    }
-
-    if (text.length >= 15) {
-        balance.style.fontSize = "23px";
-    }
-
-    if (text.length >= 18) {
-        balance.style.fontSize = "20px";
-    }
-}
 function checkMaturedSavings(){
     if(!currentUser.savings) return;
     let matured = [];
@@ -386,7 +366,6 @@ function toggleBalance(){
   }
  else {
     balanceEl.innerText = formatMoney(currentUser.balance);
-    resizeBalance();
     eyeIcon.innerText = "👁️";
     balanceVisible = true;
 }
@@ -601,7 +580,6 @@ await addDoc(referralRef, {
     }
 );
         document.getElementById('balanceAmount').innerText = formatMoney(currentUser.balance);
-resizeBalance();
 document.getElementById('walletStat').innerText = formatMoney(currentUser.balance);
         addTransaction('Investment', amount, 'Approved', `Bought ${name}`);
         updateStats();
@@ -616,7 +594,6 @@ function initDashboard() {
     updateNotifUI();
     document.getElementById('userName').innerText = currentUser.fullname || 'User';
     document.getElementById('balanceAmount').innerText = formatMoney(currentUser.balance);
-    resizeBalance();
     updateStats();
 }
 
