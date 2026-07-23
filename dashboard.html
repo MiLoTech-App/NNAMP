@@ -390,16 +390,34 @@ async function updateNotifUI(){
     );
 
     let unread = 0;
+const personalSnap = await getDocs(
+    query(
+        collection(db, "notifications"),
+        where("userId", "==", auth.currentUser.uid)
+    )
+);
 
+unread += personalSnap.size;
     snap.forEach(docSnap => {
 
-        const n = docSnap.data();
+    const n = docSnap.data();
 
-        if(n.createdAt && n.createdAt.toMillis() > lastRead.toMillis()){
-            unread++;
+    // Ignore broadcasts sent before this user joined
+    if (currentUser.joined && n.createdAt) {
+
+        const joinedDate = new Date(currentUser.joined);
+
+        if (n.createdAt.toDate() < joinedDate) {
+            return;
         }
 
-    });
+    }
+
+    if (n.createdAt && n.createdAt.toMillis() > lastRead.toMillis()) {
+        unread++;
+    }
+
+});
 
     const bellDot = document.getElementById("notifCount");
     const sidebarDot = document.getElementById("sidebarDot");

@@ -131,6 +131,22 @@ if (lastHidden) {
 }
 
     });
+    window.addEventListener("focus", () => {
+
+    const lastHidden =
+        Number(localStorage.getItem("nnamp_last_hidden"));
+
+    if (!lastHidden) return;
+
+    const awayTime = Date.now() - lastHidden;
+
+    if (awayTime >= INACTIVITY_LIMIT) {
+
+        window.logoutUser();
+
+    }
+
+});
 
     // ======================================
     // SHOW LOGOUT POPUP
