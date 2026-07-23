@@ -397,7 +397,15 @@ const personalSnap = await getDocs(
     )
 );
 
-unread += personalSnap.size;
+personalSnap.forEach(docSnap => {
+
+    const n = docSnap.data();
+
+    if (n.type === "welcome" && !n.read) {
+        unread++;
+    }
+
+});
     snap.forEach(docSnap => {
 
     const n = docSnap.data();
@@ -413,9 +421,9 @@ unread += personalSnap.size;
 
     }
 
-    if (n.createdAt && n.createdAt.toMillis() > lastRead.toMillis()) {
-        unread++;
-    }
+    if(n.createdAt && n.createdAt.toMillis() > lastRead.toMillis()){
+    unread++;
+}
 
 });
 

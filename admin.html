@@ -997,14 +997,14 @@ ${
 
             <td>
             ${
-            deposit.proofUrl
-            ?
-            `<img src="${deposit.proofUrl}" 
-            class="proof-thumb"
-            onclick="window.open('${deposit.proofUrl}','_blank')">`
-            :
-            "-"
-            }
+(deposit.proofUrl || deposit.proof)
+?
+`<img src="${deposit.proofUrl || deposit.proof}"
+class="proof-thumb"
+onclick="window.open('${deposit.proofUrl || deposit.proof}','_blank')">`
+:
+"-"
+}
             </td>
 
 

@@ -280,9 +280,11 @@ snapshot.forEach((docSnap) => {
 
 deposits.forEach(t => {
         let className = t.status === 'Approved'? 'status-approved' : t.status === 'Pending'? 'status-pending' : 'status-rejected';
-        let proofImg = t.proofUrl
-    ? `<img src="${t.proofUrl}" class="proof-thumb" onclick="window.open('${t.proofUrl}')">`
-    : `<button onclick="uploadProof('${t.id || t.docId}')" style="padding:6px 12px;background:#0d6e2f;color:#fff;border:none;border-radius:6px;cursor:pointer;">📎 Upload Proof</button>`;
+       const proof = t.proofUrl || t.proof;
+
+let proofImg = proof
+    ? `<img src="${proof}" class="proof-thumb" onclick="window.open('${proof}')">`
+    : `<button onclick="uploadProof('${t.docId}')" style="padding:6px 12px;background:#0d6e2f;color:#fff;border:none;border-radius:6px;cursor:pointer;">📎 Upload Proof</button>`;
         tbody.innerHTML += `
             <tr>
                 <td style="padding:10px;">${t.date}</td>
