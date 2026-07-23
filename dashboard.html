@@ -35,11 +35,23 @@
   .sidebar.notif-dot-sidebar { width: 8px; height: 8px; background: red; border-radius: 50%; display: inline-block; margin-left: 8px; }
   .sidebar.notif-dot-sidebar.hidden { display: none; }
   .balance-card { background: linear-gradient(135deg, #0d6e2f, #198754); color: white; padding: 20px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 12px; }
-  .balance-text { flex: 1; min-width: 0; }
+  .balance-text {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
   .balance-amount-row { display: flex; align-items: center; gap: 8px; margin: 5px 0; min-width: 0; }
-  .balance-amount { font-size: clamp(14px, 4vw, 28px); white-space: nowrap; min-width: 0; }
+  .balance-amount {
+    font-size: clamp(14px, 4vw, 28px);
+    white-space: nowrap;
+    min-width: 0;
+}
   .eye-icon { font-size: 24px; cursor: pointer; flex-shrink: 0; }
-  .balance-icon { font-size: 70px; flex-shrink: 0; line-height: 1; }
+  .balance-icon {
+    font-size: clamp(45px, 8vw, 70px);
+    flex-shrink: 0;
+    line-height: 1;
+}
         @media (max-width: 400px){.balance-icon { font-size: 50px; } }
   .plans-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(250px, 1fr)); gap:15px; margin:20px 0; }
   .plan-card{ background:white; padding:15px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.05); }
@@ -302,7 +314,27 @@ function formatMoney(n){
   if(num === 0) return '₦0';
   return '₦' + num.toLocaleString('en-NG', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 }
+function resizeBalance() {
+    const balance = document.getElementById("balanceAmount");
+    if (!balance) return;
 
+    const text = balance.innerText;
+
+    // Restore normal size first
+    balance.style.fontSize = "28px";
+
+    if (text.length >= 12) {
+        balance.style.fontSize = "26px";
+    }
+
+    if (text.length >= 15) {
+        balance.style.fontSize = "23px";
+    }
+
+    if (text.length >= 18) {
+        balance.style.fontSize = "20px";
+    }
+}
 function checkMaturedSavings(){
     if(!currentUser.savings) return;
     let matured = [];
@@ -342,19 +374,22 @@ async function addTransaction(type, amount, status, note){
 }
 
 let balanceVisible = true;
+
 function toggleBalance(){
   const balanceEl = document.getElementById('balanceAmount');
   const eyeIcon = document.getElementById('eyeIcon');
+
   if(balanceVisible){
     balanceEl.innerText = "₦****";
     eyeIcon.innerText = "🙈";
     balanceVisible = false;
   }
-  else {
+ else {
     balanceEl.innerText = formatMoney(currentUser.balance);
+    resizeBalance();
     eyeIcon.innerText = "👁️";
     balanceVisible = true;
-  }
+}
 }
 
 async function updateNotifUI(){
@@ -566,7 +601,8 @@ await addDoc(referralRef, {
     }
 );
         document.getElementById('balanceAmount').innerText = formatMoney(currentUser.balance);
-        document.getElementById('walletStat').innerText = formatMoney(currentUser.balance);
+resizeBalance();
+document.getElementById('walletStat').innerText = formatMoney(currentUser.balance);
         addTransaction('Investment', amount, 'Approved', `Bought ${name}`);
         updateStats();
         if(!isFirstInvestment){
@@ -580,6 +616,7 @@ function initDashboard() {
     updateNotifUI();
     document.getElementById('userName').innerText = currentUser.fullname || 'User';
     document.getElementById('balanceAmount').innerText = formatMoney(currentUser.balance);
+    resizeBalance();
     updateStats();
 }
 
