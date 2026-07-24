@@ -297,92 +297,110 @@ let proofImg = proof
 }
 
 async function submitDeposit() {
+
     let amount = parseFloat(document.getElementById('depositAmount').value);
     let proofFile = document.getElementById('proof').files[0];
 
-    if(!amount || amount < 3000) {
+    if (!amount || amount < 3000) {
         showAlert("Error ❌", "Minimum deposit is ₦3,000", "error");
         return;
     }
 
-    let reader = new FileReader();
-    reader.onload = async function(e) {
-
-
-    let proofBase64 = proofFile ? e.target.result : null;
-
     try {
 
-await addDoc(collection(db, "deposits"), {
+        let proofUrl = "";
 
+        // Upload proof to Cloudinary (optional)
+        if (proofFile) {
 
-        userId: currentUser.uid,
-        phone: currentUser.phone,
-        fullname: currentUser.fullname,
+            let formData = new FormData();
 
-        amount: amount,
-        status: "Pending",
+            formData.append("file", proofFile);
+            formData.append("upload_preset", "nnamp_proof");
 
-        proof: proofBase64,
+            const response = await fetch(
+                "https://api.cloudinary.com/v1_1/vzl6vwd6/image/upload",
+                {
+                    method: "POST",
+                    body: formData
+                }
+            );
 
-        date: new Date().toLocaleString(),
-        createdAt: Date.now()
+            const data = await response.json();
 
-    });
-    // Save deposit transaction to user's history
-const userRef = doc(db, "users", currentUser.uid);
+            if (!data.secure_url) {
+                throw new Error("Proof upload failed.");
+            }
 
-const userSnap = await getDoc(userRef);
+            proofUrl = data.secure_url;
+        }
 
-const userData = userSnap.data();
+        // Save deposit
+        await addDoc(collection(db, "deposits"), {
 
-const transactions = userData.transactions || [];
+            userId: currentUser.uid,
+            phone: currentUser.phone,
+            fullname: currentUser.fullname,
 
-transactions.push({
-    id: Date.now(),
-    type: "Deposit",
-    amount: amount,
-    status: "Pending",
-    date: new Date().toLocaleString(),
-    note: "Wallet Deposit"
-});
+            amount: amount,
+            status: "Pending",
 
-await updateDoc(userRef, {
-    transactions: transactions
-});
+            proofUrl: proofUrl,
 
-    await addNotification(
-    "Deposit Submitted",
-    `₦${amount.toLocaleString()} deposit is pending admin approval.`
-);
+            date: new Date().toLocaleString(),
+            createdAt: Date.now()
 
+        });
 
+        // Save deposit transaction
+        const userRef = doc(db, "users", currentUser.uid);
 
+        const userSnap = await getDoc(userRef);
 
-    showAlert(
-        "Submitted ⏳",
-        `Deposit Request Submitted!\n\n₦${amount.toLocaleString()}\n\nStatus: Pending Admin Approval`,
-        "info"
-    );
+        const userData = userSnap.data();
 
-    document.getElementById('depositAmount').value = '';
-    document.getElementById('proof').value = '';
-    document.getElementById('proofSection').style.display = 'none';
-} catch (error) {
-    console.error(error);
-    showAlert(
-        "Deposit Error ❌",
-        error.message,
-        "error"
-    );
-}
-}
+        const transactions = userData.transactions || [];
 
-    if(proofFile){
-        reader.readAsDataURL(proofFile);
-    } else {
-        reader.onload(); // run without proof
+        transactions.push({
+            id: Date.now(),
+            type: "Deposit",
+            amount: amount,
+            status: "Pending",
+            date: new Date().toLocaleString(),
+            note: "Wallet Deposit"
+        });
+
+        await updateDoc(userRef, {
+            transactions: transactions
+        });
+
+        await addNotification(
+            "Deposit Submitted",
+            `₦${amount.toLocaleString()} deposit is pending admin approval.`
+        );
+
+        showAlert(
+            "Submitted ⏳",
+            `Deposit Request Submitted!\n\n₦${amount.toLocaleString()}\n\nStatus: Pending Admin Approval`,
+            "info"
+        );
+
+        document.getElementById('depositAmount').value = "";
+        document.getElementById('proof').value = "";
+        document.getElementById('proofSection').style.display = "none";
+
+    } catch (error) {
+
+        console.error(error);
+
+        showAlert(
+            "Deposit Error ❌",
+            error.message,
+            "error"
+        );
+
     }
+
 }
 async function uploadProof(docId) {
 
