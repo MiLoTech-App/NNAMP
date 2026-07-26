@@ -1661,41 +1661,39 @@ Do you want to continue?`,
 
         const user = userSnap.data();
 
-        const availableBalance =
+const availableBalance =
 (user.balance || 0) - (user.lockedBonus || 0);
 
-if(amount > availableBalance){
+// If the user doesn't even have enough total balance, stop.
+if (amount > (user.balance || 0)) {
 
-    if((user.lockedBonus || 0) > 0){
+    return showAlert(
+        "Insufficient Balance",
+        "User does not have enough balance.",
+        "error"
+    );
+}
 
-        const proceed = await new Promise(resolve=>{
+// User has enough total balance, but part of it is locked.
+if (amount > availableBalance && (user.lockedBonus || 0) > 0) {
 
-            showConfirm(
-                "⚠️Locked Bonus Warning⚠️",
-                `This investment will use the user's locked welcome bonus.
+    const proceed = await new Promise(resolve => {
+
+        showConfirm(
+            "⚠️Locked Bonus Warning⚠️",
+            `This investment will use the user's locked welcome bonus.
 
 Normally, users cannot invest this balance until after making their first deposit.
 
 Because you are an admin, you can still continue.
 
 Do you want to continue?`,
-                ()=>resolve(true)
-            );
-
-        });
-
-        if(!proceed) return;
-
-    }else{
-
-        return showAlert(
-            "Insufficient Balance",
-            "User does not have enough available balance.",
-            "error"
+            () => resolve(true)
         );
 
-    }
+    });
 
+    if (!proceed) return;
 }
 
         const dailyProfit = amount * percent;
