@@ -86,7 +86,7 @@ function showAlert(title, message, type = "info") {
     `;
     document.body.appendChild(alertDiv);
     // AUTO CLOSE AFTER 2.5s
-    setTimeout(() => { if(document.body.contains(alertDiv)){ alertDiv.remove(); } }, 2500);
+    setTimeout(() => { if(document.body.contains(alertDiv)){ alertDiv.remove(); } }, 20000);
 }
 
 window.onload = function() {
@@ -213,16 +213,16 @@ try {
 
 localStorage.removeItem("referralCode");
     showAlert(
-        "Welcome to NNAMP 🎉",
-        "Account created successfully!",
-        "success"
-    );
+    "Success ✅\nWelcome to NNAMP 🎉",
+    "Account created successfully!\n\n🔒 Security Reminder\nPlease save your password in a safe place.\n\nFor security purposes, password recovery is currently unavailable. You will need your password to access your account.\n\nHappy investing! 👍🤩",
+    "success"
+);
 
     setTimeout(() => {
 
         window.location.href = "login.html";
 
-    }, 2000);
+    }, 20000);
 
 } catch(error){
 
