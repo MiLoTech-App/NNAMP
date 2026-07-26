@@ -137,6 +137,8 @@ h2{font-size:20px;}
     <h2>NNAMP ADMIN🇳🇬</h2>
     <a href="#" onclick="showTab('dashboard', this)" class="active">📊 Dashboard</a>
     <a href="#" onclick="showTab('users', this)">👥 All Users</a>
+    <a href="#" onclick="showTab('savings', this)">💰 Savings</a>
+    <a href="#" onclick="showTab('investments', this)">📊 Investments</a>
     <a href="#" onclick="showTab('deposits', this)">⬇️ Deposits</a>
     <a href="#" onclick="showTab('withdraws', this)">⬆️ Withdrawals</a>
     <a href="#" onclick="showTab('transactions', this)">📄 Transactions</a>
@@ -171,6 +173,105 @@ h2{font-size:20px;}
             <button class="btn red" onclick="deleteUser()">Delete User</button>
         </div>
     </div>
+    <div id="savings" class="tab-content">
+
+<div class="card">
+
+<h4>Create Savings For User</h4>
+
+<select id="savingUser" style="width:100%;padding:10px;margin-bottom:10px;">
+<option value="">Select User</option>
+</select>
+
+<select id="savingPlan" style="width:100%;padding:10px;margin-bottom:10px;">
+<option value="30|10|1 Month Plan">1 Month Plan (10% Daily)</option>
+<option value="90|15|3 Months Plan">3 Months Plan (15% Daily)</option>
+<option value="180|20|6 Months Plan">6 Months Plan (20% Daily)</option>
+<option value="365|25|1 Year Plan">1 Year Plan (25% Daily)</option>
+</select>
+
+<input
+type="number"
+id="savingAmount"
+placeholder="Amount">
+
+<button
+class="btn green"
+onclick="adminCreateSaving()">
+Create Saving
+</button>
+
+</div>
+
+</div>
+<div id="investments" class="tab-content">
+
+<div class="card">
+
+<h4>Create Investment For User</h4>
+
+<select id="investmentUser" style="width:100%;padding:10px;margin-bottom:10px;">
+<option value="">Select User</option>
+</select>
+
+<select id="investmentPlan" style="width:100%;padding:10px;margin-bottom:10px;">
+
+<option value="Starter Plan|3000|0.07">
+Starter Plan (₦3,000)
+</option>
+
+<option value="Basic Plan|5000|0.07">
+Basic Plan (₦5,000)
+</option>
+
+<option value="Standard Plan|10000|0.07">
+Standard Plan (₦10,000)
+</option>
+
+<option value="Classic Plan|20000|0.07">
+Classic Plan (₦20,000)
+</option>
+
+<option value="Silver Plan|50000|0.07">
+Silver Plan (₦50,000)
+</option>
+
+<option value="Gold Plan|100000|0.07">
+Gold Plan (₦100,000)
+</option>
+
+<option value="Platinum Plan|200000|0.07">
+Platinum Plan (₦200,000)
+</option>
+
+<option value="Premium Plan|500000|0.07">
+Premium Plan (₦500,000)
+</option>
+
+<option value="Elite Plan|1000000|0.07">
+Elite Plan (₦1,000,000)
+</option>
+
+<option value="Executive Plan|2000000|0.07">
+Executive Plan (₦2,000,000)
+</option>
+
+</select>
+
+<input
+type="number"
+id="investmentAmount"
+placeholder="Investment Amount">
+
+<button
+class="btn green"
+onclick="adminCreateInvestment()">
+Create Investment
+</button>
+
+</div>
+
+</div>
 
     <div id="deposits" class="tab-content">
         <div class="card"><h4>Pending Deposits</h4><div class="table-wrapper"><table id="depositsTable"></table></div></div>
@@ -234,7 +335,8 @@ import {
     updateDoc,
     deleteDoc,
     increment,
-    serverTimestamp
+    serverTimestamp,
+    arrayUnion
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 initSessionManager(auth);
 // ========== CUSTOM POPUP FUNCTIONS - ADDED ==========
@@ -333,6 +435,8 @@ function showTab(tabName, el) {
     if(tabName === 'deposits') loadPendingDeposits();
     if(tabName === 'withdraws') loadPendingWithdrawals();
     if(tabName === 'users') loadAllUsers();
+    if(tabName === 'savings') loadSavingUsers();
+    if(tabName === 'investments') loadInvestmentUsers();
     if(tabName === 'transactions') loadAllTransactions();
     if(tabName === 'dashboard') updateDashboardStats();
 }
@@ -1294,6 +1398,391 @@ console.log("Users found:", usersSnap.size);
     }
 
 }
+async function adminCreateSaving(){
+
+    try{
+
+        const uid = document.getElementById("savingUser").value;
+        const amount = Number(document.getElementById("savingAmount").value);
+
+        if(!uid){
+            return showAlert("Error ❌","Select a user.","error");
+        }
+
+        if(amount <= 0){
+            return showAlert("Error ❌","Enter a valid amount.","error");
+        }
+
+        const planData = document.getElementById("savingPlan").value.split("|");
+        const days = Number(planData[0]);
+const rate = Number(planData[1]);
+const planName = planData[2];
+        
+        let minimum;
+
+if (days === 30) {
+    minimum = 1000;
+} else if (days === 90) {
+    minimum = 5000;
+} else if (days === 180) {
+    minimum = 10000;
+} else if (days === 365) {
+    minimum = 20000;
+} else {
+    minimum = 0;
+}
+
+if (amount < minimum) {
+
+    const proceed = await new Promise(resolve => {
+
+        showConfirm(
+            "⚠️Below Minimum Amount⚠️",
+            `The minimum for this plan is ₦${minimum.toLocaleString()}🚫.
+
+You entered ₦${amount.toLocaleString()}.
+
+Because you are an admin, you can still continue.
+
+Do you want to continue?`,
+            () => resolve(true)
+        );
+
+    });
+
+    if (!proceed) return;
+}
+
+
+        const userRef = doc(db,"users",uid);
+        const userSnap = await getDoc(userRef);
+
+        if(!userSnap.exists()){
+            return showAlert("Error ❌","User not found.","error");
+        }
+
+        const user = userSnap.data();
+
+        if((user.balance || 0) < amount){
+            return showAlert(
+                "Insufficient Balance",
+                "User does not have enough balance.",
+                "error"
+            );
+        }
+
+        const startDate = new Date();
+
+        const maturityDate = new Date();
+
+        maturityDate.setDate(startDate.getDate() + days);
+
+        const dailyEarn = amount * (rate / 100);
+
+        const totalReturn = amount + (dailyEarn * days);
+
+        let savings = user.savings || [];
+
+        let transactions = user.transactions || [];
+
+        savings.push({
+            id: Date.now(),
+            plan: planName,
+            amount: amount,
+            rate: rate,
+            days: days,
+            dailyEarn: dailyEarn,
+            startDate: startDate.toISOString(),
+            maturityDate: maturityDate.toISOString(),
+            totalReturn: totalReturn,
+            status: "Active"
+        });
+
+        transactions.unshift({
+            id: Date.now(),
+            type: "Savings",
+            amount: -amount,
+            status: "Approved",
+            date: new Date().toLocaleString(),
+            note: "Started " + planName
+        });
+
+        await updateDoc(userRef,{
+            balance: (user.balance || 0) - amount,
+            savings: savings,
+            transactions: transactions
+        });
+
+        showAlert(
+            "Success ✅",
+            "Savings created successfully.",
+            "success"
+        );
+
+        document.getElementById("savingAmount").value = "";
+
+        updateDashboardStats();
+
+    }catch(err){
+
+        console.error(err);
+
+        showAlert(
+            "Error ❌",
+            err.message,
+            "error"
+        );
+    }
+
+}
+async function loadSavingUsers(){
+
+    const select = document.getElementById("savingUser");
+
+    if(!select) return;
+
+    select.innerHTML =
+    '<option value="">Select User</option>';
+
+    const usersSnap = await getDocs(
+        collection(db,"users")
+    );
+
+    usersSnap.forEach((docSnap)=>{
+
+        const user = docSnap.data();
+
+        const option = document.createElement("option");
+
+        option.value = docSnap.id;
+
+        option.textContent =
+        `${user.fullname || user.phone} (${user.phone})`;
+
+        select.appendChild(option);
+
+    });
+
+}
+async function loadInvestmentUsers(){
+
+    const select = document.getElementById("investmentUser");
+
+    if(!select) return;
+
+    select.innerHTML =
+    '<option value="">Select User</option>';
+
+    const usersSnap = await getDocs(
+        collection(db,"users")
+    );
+
+    usersSnap.forEach((docSnap)=>{
+
+        const user = docSnap.data();
+
+        const option = document.createElement("option");
+
+        option.value = docSnap.id;
+
+        option.textContent =
+        `${user.fullname || user.phone} (${user.phone})`;
+
+        select.appendChild(option);
+
+    });
+
+}
+async function adminCreateInvestment(){
+
+    try{
+
+        const uid = document.getElementById("investmentUser").value;
+
+        const amount = Number(document.getElementById("investmentAmount").value);
+
+        if(!uid){
+            return showAlert(
+                "Error ❌",
+                "Select a user.",
+                "error"
+            );
+        }
+
+        if(amount <= 0){
+            return showAlert(
+                "Error ❌",
+                "Enter a valid amount.",
+                "error"
+            );
+        }
+
+        const planData =
+        document.getElementById("investmentPlan").value.split("|");
+
+        const planName = planData[0];
+
+        const minimum = Number(planData[1]);
+
+        const percent = Number(planData[2]);
+
+        if(amount < minimum){
+
+            const proceed = await new Promise(resolve=>{
+
+                showConfirm(
+                    "⚠️Below Minimum Amount⚠️",
+                    `The minimum for this plan is ₦${minimum.toLocaleString()}🚫.
+
+You entered ₦${amount.toLocaleString()}.
+
+Because you are an admin, you can still continue.
+
+Do you want to continue?`,
+                    ()=>resolve(true)
+                );
+
+            });
+
+            if(!proceed) return;
+        }
+
+        const userRef = doc(db,"users",uid);
+
+        const userSnap = await getDoc(userRef);
+
+        if(!userSnap.exists()){
+            return showAlert(
+                "Error ❌",
+                "User not found.",
+                "error"
+            );
+        }
+
+        const user = userSnap.data();
+
+        const availableBalance =
+(user.balance || 0) - (user.lockedBonus || 0);
+
+if(amount > availableBalance){
+
+    if((user.lockedBonus || 0) > 0){
+
+        const proceed = await new Promise(resolve=>{
+
+            showConfirm(
+                "⚠️Locked Bonus Warning⚠️",
+                `This investment will use the user's locked welcome bonus.
+
+Normally, users cannot invest this balance until after making their first deposit.
+
+Because you are an admin, you can still continue.
+
+Do you want to continue?`,
+                ()=>resolve(true)
+            );
+
+        });
+
+        if(!proceed) return;
+
+    }else{
+
+        return showAlert(
+            "Insufficient Balance",
+            "User does not have enough available balance.",
+            "error"
+        );
+
+    }
+
+}
+
+        const dailyProfit = amount * percent;
+
+        const totalProfit = dailyProfit * 100;
+
+        const now = Date.now();
+
+        await addDoc(collection(db,"investments"),{
+
+            userId: uid,
+
+            phone: user.phone,
+
+            name: planName,
+
+            amount: amount,
+
+            percent: percent,
+
+            dailyProfit: dailyProfit,
+
+            totalProfit: totalProfit,
+
+            startTime: now,
+
+            endTime: now + (100*24*60*60*1000),
+
+            lastPaid: now,
+
+            status: "Active"
+
+        });
+
+        const transactions = user.transactions || [];
+
+        transactions.unshift({
+
+            id: Date.now(),
+
+            type: "Investment",
+
+            amount: amount,
+
+            status: "Approved",
+
+            date: new Date().toLocaleString(),
+
+            note: `Invested in ${planName}`
+
+        });
+
+        await updateDoc(userRef,{
+
+            balance: (user.balance||0) - amount,
+
+            hasInvested: true,
+
+            lockedBonus: 0,
+
+            transactions: transactions
+
+        });
+
+        showAlert(
+            "Success ✅",
+            "Investment created successfully.",
+            "success"
+        );
+
+        document.getElementById("investmentAmount").value="";
+
+        updateDashboardStats();
+
+    }catch(err){
+
+        console.error(err);
+
+        showAlert(
+            "Error ❌",
+            err.message,
+            "error"
+        );
+
+    }
+
+}
 window.showTab = showTab;
 window.loadAllUsers = loadAllUsers;
 window.loadPendingDeposits = loadPendingDeposits;
@@ -1309,6 +1798,10 @@ window.showConfirm = showConfirm;
 window.approveWithdrawal = approveWithdrawal;
 window.rejectWithdrawal = rejectWithdrawal;
 window.sendNotificationToAll = sendNotificationToAll;
+window.adminCreateSaving = adminCreateSaving;
+window.loadSavingUsers = loadSavingUsers;
+window.loadInvestmentUsers = loadInvestmentUsers;
+window.adminCreateInvestment = adminCreateInvestment;
 </script>
 <!-- NNAMP AUTO LOGOUT POPUP -->
 
