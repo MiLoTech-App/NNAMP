@@ -71,6 +71,16 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
 
     const phone = document.getElementById('phone').value.trim();
     const password = document.getElementById('login-password').value;
+    if (!navigator.onLine) {
+
+    showAlert(
+        "No Internet 🌐",
+        "Please turn on your internet connection.",
+        "error"
+    );
+
+    return;
+}
 
     // Keep your admin login
     if(phone === "08000000" && password === "admin123"){
@@ -134,7 +144,21 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
 
     }catch(error){
 
-        console.error(error);
+    console.error(error);
+
+    if (error.code === "auth/network-request-failed") {
+
+        showAlert(
+            "Network Error 🌐",
+            "Please check your internet connection and try again.",
+            "error"
+        );
+
+    } else if (
+        error.code === "auth/invalid-credential" ||
+        error.code === "auth/user-not-found" ||
+        error.code === "auth/wrong-password"
+    ) {
 
         showAlert(
             "Login Failed ❌",
@@ -142,7 +166,17 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
             "error"
         );
 
+    } else {
+
+        showAlert(
+            "Login Error ❌",
+            "Something went wrong. Please try again later.",
+            "error"
+        );
+
     }
+
+}
 
 });
 </script>

@@ -63,6 +63,16 @@ window.togglePassword = togglePassword;
 
     const phone = document.getElementById('adminPhone').value.trim();
     const password = document.getElementById('adminPassword').value;
+    if (!navigator.onLine) {
+
+    showAlert(
+        "No Internet 🌐",
+        "Please turn on your internet connection.",
+        "error"
+    );
+
+    return;
+}
 
     // Convert phone to hidden email
     const email = phone + "@nnamp.app";
@@ -118,16 +128,41 @@ window.togglePassword = togglePassword;
             window.location.href = "admin.html";
         },2000);
 
-    }catch(error){
+    }catch(error) {
 
-        console.error(error);
+    console.error(error);
+
+    if (error.code === "auth/network-request-failed") {
 
         showAlert(
-    "Login Failed ❌",
-    "Incorrect phone number or password.",
-    "error"
-);
+            "Network Error 🌐",
+            "Please check your internet connection and try again.",
+            "error"
+        );
+
+    } else if (
+        error.code === "auth/invalid-credential" ||
+        error.code === "auth/user-not-found" ||
+        error.code === "auth/wrong-password"
+    ) {
+
+        showAlert(
+            "Login Failed ❌",
+            "Incorrect phone number or password.",
+            "error"
+        );
+
+    } else {
+
+        showAlert(
+            "Login Error ❌",
+            "Something went wrong. Please try again later.",
+            "error"
+        );
+
     }
+
+}
 });
 </script>
 <script src="script.js"></script>
