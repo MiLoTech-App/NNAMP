@@ -477,37 +477,52 @@ async function openNotifications(event){
 }
 window.openNotifications = openNotifications;
 window.markNotificationsRead = markNotificationsRead;
-async function updateStats(){
+async function updateStats() {
 
-    const plansSnap = await getDocs(
+    // Wallet balance
+    document.getElementById("walletStat").innerText =
+        formatMoney(currentUser.balance || 0);
+
+    // Investments
+    const investmentSnap = await getDocs(
         collection(db, "users", auth.currentUser.uid, "investments")
     );
 
     let totalInvested = 0;
 
-    plansSnap.forEach(docSnap=>{
-        const plan = docSnap.data();
-        totalInvested += Number(plan.amount || 0);
+    investmentSnap.forEach((docSnap) => {
+        const data = docSnap.data();
+        totalInvested += Number(data.amount || 0);
     });
-
-    const savings = currentUser.savings || [];
-
-    const totalSavings = savings
-        .filter(s => s.status === "Active")
-        .reduce((sum,s)=>sum + Number(s.amount || 0),0);
-
-    document.getElementById("walletStat").innerText =
-        formatMoney(currentUser.balance);
 
     document.getElementById("totalInvested").innerText =
         formatMoney(totalInvested);
 
+    // Savings
+    const savingsSnap = await getDocs(
+        collection(db, "users", auth.currentUser.uid, "savings")
+    );
+
+    let totalSavings = 0;
+
+    savingsSnap.forEach((docSnap) => {
+        const data = docSnap.data();
+
+        if (data.status === "Active") {
+            totalSavings += Number(data.amount || 0);
+        }
+    });
+
     document.getElementById("totalSavings").innerText =
         formatMoney(totalSavings);
 
-    document.getElementById("totalReferrals").innerText =
-        currentUser.totalReferrals || 0;
+    // Referrals
+    const referralSnap = await getDocs(
+        collection(db, "users", auth.currentUser.uid, "referrals")
+    );
 
+    document.getElementById("totalReferrals").innerText =
+        referralSnap.size;
 }
 
 function buyPlan(name, amount, percent){
