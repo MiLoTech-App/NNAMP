@@ -498,20 +498,12 @@ async function updateStats() {
     document.getElementById("totalInvested").innerText =
         formatMoney(totalInvested);
 
-    // Savings
-    const savingsSnap = await getDocs(
-        collection(db, "users", auth.currentUser.uid, "savings")
-    );
+    // Savings (fixed)
+    const savings = currentUser.savings || [];
 
-    let totalSavings = 0;
-
-    savingsSnap.forEach((docSnap) => {
-        const data = docSnap.data();
-
-        if (data.status === "Active") {
-            totalSavings += Number(data.amount || 0);
-        }
-    });
+    const totalSavings = savings
+        .filter(item => item.status === "Active")
+        .reduce((sum, item) => sum + Number(item.amount || 0), 0);
 
     document.getElementById("totalSavings").innerText =
         formatMoney(totalSavings);
