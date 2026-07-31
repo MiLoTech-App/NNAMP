@@ -446,17 +446,46 @@ async function startCountdown(plan) {
         let seconds = Math.floor((distance % (1000 * 60)) / 1000);
         let el = document.getElementById(`countdown-${plan.id}`);
         if(el) el.innerText = hours + "h " + minutes + "m " + seconds + "s";
-        if(now - plan.lastPaid >= 24 * 60 * 60 * 1000 && distance > 0){
-            plan.lastPaid = now;
-            currentUser.balance += plan.dailyProfit;
-            saveUser(currentUser);
-            console.log(currentUser.transactions);
-            addTransaction('Investment Earning', plan.dailyProfit, 'Approved', `${plan.name} Daily Profit`);
-            showAlert("Earning Credited 💰", `${formatMoney(plan.dailyProfit)} added from ${plan.name}`, "success");
-            await updateDoc(doc(db, "investments", plan.id), {
-    lastPaid: now
-});
-        }
+        if (now - plan.lastPaid >= 24 * 60 * 60 * 1000 && distance > 0) {
+
+    const investmentRef = doc(db, "investments", plan.id);
+
+    const latestSnap = await getDoc(investmentRef);
+
+    if (!latestSnap.exists()) {
+        return;
+    }
+
+    const latestData = latestSnap.data();
+
+    // Another tab has already paid
+    if (now - latestData.lastPaid < 24 * 60 * 60 * 1000) {
+        return;
+    }
+
+    await updateDoc(investmentRef, {
+        lastPaid: now
+    });
+
+    plan.lastPaid = now;
+
+    currentUser.balance += plan.dailyProfit;
+
+    addTransaction(
+        "Investment Earning",
+        plan.dailyProfit,
+        "Approved",
+        `${plan.name} Daily Profit`
+    );
+
+    await saveUser(currentUser);
+
+    showAlert(
+        "Earning Credited 💰",
+        `${formatMoney(plan.dailyProfit)} added from ${plan.name}`,
+        "success"
+    );
+}
         if(distance <= 0 && plan.status === "Active"){
             await deleteDoc(doc(db, "investments", plan.id));
             showAlert("Investment Completed 🎉", `${plan.name} Completed!\nYou earned ${formatMoney(plan.totalProfit)} in total profit.`, "success");

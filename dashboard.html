@@ -485,8 +485,11 @@ async function updateStats() {
 
     // Investments
     const investmentSnap = await getDocs(
-        collection(db, "users", auth.currentUser.uid, "investments")
-    );
+    query(
+        collection(db, "investments"),
+        where("userId", "==", auth.currentUser.uid)
+    )
+);
 
     let totalInvested = 0;
 
@@ -510,11 +513,14 @@ async function updateStats() {
 
     // Referrals
     const referralSnap = await getDocs(
-        collection(db, "users", auth.currentUser.uid, "referrals")
-    );
+    query(
+        collection(db, "referrals"),
+        where("referrerId", "==", auth.currentUser.uid)
+    )
+);
 
-    document.getElementById("totalReferrals").innerText =
-        referralSnap.size;
+document.getElementById("totalReferrals").innerText =
+    referralSnap.size;
 }
 
 function buyPlan(name, amount, percent){

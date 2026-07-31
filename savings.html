@@ -247,26 +247,41 @@ async function saveUserToStorage(){
 function formatMoney(n){ return '₦' + Number(n).toLocaleString('en-NG', {minimumFractionDigits:2}); }
 
 // AUTO CHECK MATURITY - NEW
-function checkMaturedSavings(){
+async function checkMaturedSavings(){
     if(!currentUser.savings || currentUser.savings.length === 0) return;
     let matured = [];
     let today = new Date();
 
-    currentUser.savings.forEach(s => {
-        if(s.status === "Active"){
-            let maturityDate = new Date(s.maturityDate);
-            if(today >= maturityDate){
-                currentUser.balance += s.totalReturn;
-                s.status = "Completed";
-                s.completedDate = today.toISOString();
-                matured.push(s);
-                addTransaction('Savings Payout', s.totalReturn, 'Approved', `${s.plan} Matured - Capital + Interest`);
-            }
-        }
-    });
+    for (const s of currentUser.savings) {
+
+    if (s.status === "Active") {
+
+        let maturityDate = new Date(s.maturityDate);
+
+        if (today >= maturityDate && !s.completedDate) {
+
+    s.completedDate = today.toISOString();
+
+    s.status = "Completed";
+
+    await saveUserToStorage();
+
+    currentUser.balance += s.totalReturn;
+
+    matured.push(s);
+
+    addTransaction(
+        "Savings Payout",
+        s.totalReturn,
+        "Approved",
+        `${s.plan} Matured - Capital + Interest`
+    );
+}
+    }
+}
 
     if(matured.length > 0){
-        saveUserToStorage();
+        await saveUserToStorage();
         let totalPaid = matured.reduce((sum, s) => sum + s.totalReturn, 0);
         showAlert("Congratulations 🎉", `${matured.length} Savings plan(s) matured.\n${formatMoney(totalPaid)} has been credited to your balance.`, "success");
     }
@@ -372,10 +387,10 @@ function loadActiveSavings(){
     });
 }
 
-function addTransaction(type, amount, status, note){
+async function addTransaction(type, amount, status, note){
     if(!currentUser.transactions) currentUser.transactions = [];
     currentUser.transactions.unshift({id: Date.now(), type, amount: parseFloat(amount), status, date: new Date().toLocaleString(), note});
-    saveUserToStorage();
+    await saveUserToStorage();
 }
 window.toggleSidebar = toggleSidebar;
 window.logout = logout;
