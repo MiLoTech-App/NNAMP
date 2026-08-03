@@ -105,18 +105,29 @@ export function initSessionManager(auth) {
 
         const userData = snap.data();
 
-        if (
-    userData.status === "suspended" &&
-    userData.admin !== true
-) {
+        const isAdminPage = window.location.pathname.includes("myadmin.html");
+
+if (userData.status === "suspended") {
 
     showAlert(
         "Account Suspended ❌",
-        "Your account has been suspended.\n\nContact support/Admin.",
+        "Your account has been suspended.\n\nContact support/Senior-Admin😊.",
         "error"
     );
 
-    window.logoutUser();
+    setTimeout(() => {
+
+        if (isAdminPage) {
+
+            window.location.href = "admin-login.html";
+
+        } else {
+
+            window.logoutUser();
+
+        }
+
+    }, 1500);
 
 }
 

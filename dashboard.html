@@ -210,6 +210,35 @@ import {
     arrayUnion
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 initSessionManager(auth);
+function watchAccountStatus(uid) {
+
+    onSnapshot(doc(db, "users", uid), async (snap) => {
+
+        if (!snap.exists()) return;
+
+        const userData = snap.data();
+
+        if (userData.status === "suspended") {
+
+            showAlert(
+                "Account Suspended ❌",
+                "Your account has been suspended. Contact support/Admin😊.",
+                "error"
+            );
+
+            setTimeout(async () => {
+
+                await signOut(auth);
+
+                window.location.href = "login.html";
+
+            }, 2500);
+
+        }
+
+    });
+
+}
 // ========== CUSTOM POPUP FUNCTIONS - ADDED ==========
 function showAlert(title, message, type = "info") {
 
@@ -284,11 +313,32 @@ onAuthStateChanged(auth, async (user) => {
     }
 
     currentUser = snap.data();
-    currentUser.balance = parseFloat(currentUser.balance) || 0;
-    updateNotifUI();
-    listenForBroadcasts();
-    initDashboard();
 
+if (currentUser.status === "suspended") {
+
+    showAlert(
+        "Account Suspended ❌",
+        "Your account has been suspended. Contact support/Admin😊.",
+        "error"
+    );
+
+    setTimeout(async () => {
+
+        await signOut(auth);
+
+        window.location.href = "login.html";
+
+    }, 2500);
+
+    return;
+}
+
+currentUser.balance = parseFloat(currentUser.balance) || 0;
+
+updateNotifUI();
+listenForBroadcasts();
+initDashboard();
+watchAccountStatus(user.uid);
 });
 
 // FORCE BALANCE TO NUMBER ON LOAD
