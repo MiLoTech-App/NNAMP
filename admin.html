@@ -370,6 +370,7 @@ import {
     collection,
     getDocs,
     getDoc,
+    onSnapshot,
     addDoc,
     query,
     where,
@@ -478,7 +479,29 @@ onAuthStateChanged(auth, async (user)=>{
 
 
     console.log("Admin verified:", adminSnap.data());
+onSnapshot(doc(db, "users", user.uid), async (snap) => {
 
+    if (!snap.exists()) return;
+
+    const data = snap.data();
+
+    if (data.status === "suspended") {
+
+        showAlert(
+            "Account Suspended ❌",
+            "Your account has been suspended.Contact support/Senior-Admin😊"
+        );
+
+        setTimeout(async () => {
+
+            await signOut(auth);
+
+            window.location.href = "admin-login.html";
+
+        }, 2500);
+    }
+
+});
 
     await updateDashboardStats();
     loadAllUsers();

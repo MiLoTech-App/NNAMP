@@ -1,9 +1,3 @@
-import { db } from "./firebase.js";
-
-import {
-    doc,
-    onSnapshot
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 // ======================================
 // NNAMP SESSION MANAGER
 // ======================================
@@ -95,45 +89,6 @@ export function initSessionManager(auth) {
         }
 
     };
-    auth.onAuthStateChanged((user) => {
-
-    if (!user) return;
-
-    onSnapshot(doc(db, "users", user.uid), (snap) => {
-
-        if (!snap.exists()) return;
-
-        const userData = snap.data();
-
-        const isAdminPage = window.location.pathname.includes("myadmin.html");
-
-if (userData.status === "suspended") {
-
-    showAlert(
-        "Account Suspended ❌",
-        "Your account has been suspended.\n\nContact support/Senior-Admin😊.",
-        "error"
-    );
-
-    setTimeout(() => {
-
-        if (isAdminPage) {
-
-            window.location.href = "admin-login.html";
-
-        } else {
-
-            window.logoutUser();
-
-        }
-
-    }, 1500);
-
-}
-
-    });
-
-});
         // ======================================
     // USER LEAVES / RETURNS
     // ======================================
