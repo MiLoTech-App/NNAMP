@@ -270,12 +270,17 @@ async function checkMaturedSavings(){
 
     matured.push(s);
 
-    addTransaction(
-        "Savings Payout",
-        s.totalReturn,
-        "Approved",
-        `${s.plan} Matured - Capital + Interest`
-    );
+    const maturityTime = new Date(
+    s.maturityDate
+).toLocaleString();
+
+await addTransaction(
+    "Savings Payout",
+    s.totalReturn,
+    "Approved",
+    `${s.plan} Matured - Capital + Interest`,
+    maturityTime
+);
 }
     }
 }
@@ -340,8 +345,9 @@ document.querySelectorAll('.startSaving').forEach(btn => {
                 currentUser.balance -= amount;
                 if(!currentUser.savings) currentUser.savings = [];
                 let startDate = new Date();
-                let maturityDate = new Date();
-                maturityDate.setDate(startDate.getDate() + days);
+let maturityDate = new Date();
+
+maturityDate.setDate(startDate.getDate() + days);
                 let dailyEarn = amount * (rate / 100);
                 let totalReturn = amount + (dailyEarn * days);
 
@@ -387,9 +393,27 @@ function loadActiveSavings(){
     });
 }
 
-async function addTransaction(type, amount, status, note){
-    if(!currentUser.transactions) currentUser.transactions = [];
-    currentUser.transactions.unshift({id: Date.now(), type, amount: parseFloat(amount), status, date: new Date().toLocaleString(), note});
+async function addTransaction(
+    type,
+    amount,
+    status,
+    note,
+    customDate = null
+) {
+
+    if (!currentUser.transactions) {
+        currentUser.transactions = [];
+    }
+
+    currentUser.transactions.unshift({
+        id: Date.now(),
+        type,
+        amount: parseFloat(amount),
+        status,
+        date: customDate || new Date().toLocaleString(),
+        note
+    });
+
     await saveUserToStorage();
 }
 window.toggleSidebar = toggleSidebar;

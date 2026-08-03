@@ -193,7 +193,7 @@ onAuthStateChanged(auth, async (user) => {
     currentUser.balance = Number(currentUser.balance) || 0;
     currentUser.lockedBonus = Number(currentUser.lockedBonus) || 0;
 
-    window.onload();
+    await initializePage();
 
 });
 function showAlert(title, message, type = "info") {
@@ -244,20 +244,45 @@ function logout(){
 
 function formatMoney(n){ return '₦' + Number(n).toLocaleString('en-NG', {minimumFractionDigits:0, maximumFractionDigits:2}); }
 
-function addTransaction(type, amount, status, note){
-    if(!currentUser.transactions) currentUser.transactions = [];
-    currentUser.transactions.unshift({id: Date.now(), type, amount: parseFloat(amount), status, date: new Date().toLocaleString(), note});
-    saveUser(currentUser);
+function addTransaction(
+    type,
+    amount,
+    status,
+    note,
+    customDate = null
+) {
+
+    if (!currentUser.transactions) {
+        currentUser.transactions = [];
+    }
+
+    currentUser.transactions.unshift({
+        id: Date.now() + Math.random(),
+        type,
+        amount: parseFloat(amount),
+        status,
+        date: customDate || new Date().toLocaleString(),
+        note
+    });
+}
+async function initializePage() {
+
+    let available = currentUser.balance - (currentUser.lockedBonus || 0);
+
+    document.getElementById("availableBalance").innerText =
+        formatMoney(available);
+
+    document.getElementById("lockedBonus").innerText =
+        formatMoney(currentUser.lockedBonus || 0);
+
+    if (currentUser.lockedBonus > 0) {
+        document.getElementById("lockedNote").style.display = "block";
+    }
+
+    await loadActivePlans();
+    await loadNotifications();
 }
 
-window.onload = function(){
-    let available = currentUser.balance - (currentUser.lockedBonus || 0);
-    document.getElementById('availableBalance').innerText = formatMoney(available);
-    document.getElementById('lockedBonus').innerText = formatMoney(currentUser.lockedBonus || 0);
-    if(currentUser.lockedBonus > 0) document.getElementById('lockedNote').style.display = 'block';
-    loadActivePlans();
-    loadNotifications();
-}
 
 function buyPlan(name, amount, percent){
     let withdrawableBalance = currentUser.balance - (currentUser.lockedBonus || 0);
@@ -386,7 +411,51 @@ setTimeout(() => location.reload(), 2000);
         }
     );
 }
+async function creditInvestment(plan) {
 
+    let now = Date.now();
+
+    const PERIOD = 24 * 60 * 60 * 1000;
+
+    let periods = Math.floor(
+        (now - plan.lastPaid) / PERIOD
+    );
+
+    if (periods <= 0) {
+        return;
+    }
+
+    for (let i = 0; i < periods; i++) {
+
+    currentUser.balance += plan.dailyProfit;
+
+    const paymentTime = new Date(
+    plan.lastPaid + ((i + 1) * PERIOD)
+).toLocaleString();
+
+addTransaction(
+    "Investment Earning",
+    plan.dailyProfit,
+    "Approved",
+    `${plan.name} Daily Profit`,
+    paymentTime
+);
+
+}
+
+    plan.lastPaid += periods * PERIOD;
+
+    await updateDoc(
+        doc(db, "investments", plan.id),
+        {
+            lastPaid: plan.lastPaid
+        }
+    );
+currentUser.transactions.sort((a, b) => {
+    return new Date(b.date) - new Date(a.date);
+});
+    await saveUser(currentUser);
+}
 async function loadActivePlans(){
   const q = query(
     collection(db, "investments"),
@@ -407,10 +476,11 @@ snapshot.forEach((docSnap) => {
     if(plans.length > 0){
         container.style.display = 'block';
         container.innerHTML = '<h4 style="margin:0 0 10px 0; color:#0d6e2f;">📊 My Active Investments</h4>';
-        plans.forEach(plan => {
+        for (const plan of plans) {
             if(!plan.dailyProfit) plan.dailyProfit = plan.amount * plan.percent;
             if(!plan.totalProfit) plan.totalProfit = plan.dailyProfit * 100;
             if(!plan.lastPaid) plan.lastPaid = plan.startTime;
+            await creditInvestment(plan);
             let totalTime = 100 * 24 * 60 * 60 * 1000;
             let timePassed = new Date().getTime() - plan.startTime;
             let progress = (timePassed / totalTime) * 100;
@@ -425,72 +495,84 @@ snapshot.forEach((docSnap) => {
                 </div>
             `;
             startCountdown(plan);
-        });
+        }
     }
 }
+
+let activeIntervals = {};
 
 async function startCountdown(plan) {
-    setInterval(async () => {
-        let now = new Date().getTime();
-        let distance = plan.endTime - now;
-        let daysLeft = Math.ceil(distance / (1000 * 60 * 60 * 24));
-        let elDays = document.getElementById(`daysleft-${plan.id}`);
-        if(elDays) elDays.innerText = daysLeft > 0? daysLeft : 0;
-        let totalTime = 100 * 24 * 60 * 60 * 1000;
-        let timePassed = now - plan.startTime;
-        let progress = (timePassed / totalTime) * 100;
-        let elProgress = document.getElementById(`progress-${plan.id}`);
-        if(elProgress) elProgress.style.width = progress + '%';
-        let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-        let seconds = Math.floor((distance % (1000 * 60)) / 1000);
-        let el = document.getElementById(`countdown-${plan.id}`);
-        if(el) el.innerText = hours + "h " + minutes + "m " + seconds + "s";
-        if (now - plan.lastPaid >= 24 * 60 * 60 * 1000 && distance > 0) {
 
-    const investmentRef = doc(db, "investments", plan.id);
-
-    const latestSnap = await getDoc(investmentRef);
-
-    if (!latestSnap.exists()) {
-        return;
+    if (activeIntervals[plan.id]) {
+        clearInterval(activeIntervals[plan.id]);
     }
 
-    const latestData = latestSnap.data();
+    activeIntervals[plan.id] = setInterval(async () => {
 
-    // Another tab has already paid
-    if (now - latestData.lastPaid < 24 * 60 * 60 * 1000) {
-        return;
-    }
+        let now = Date.now();
 
-    await updateDoc(investmentRef, {
-        lastPaid: now
-    });
+        let nextPaymentTime = plan.lastPaid + (24 * 60 * 60 * 1000);
 
-    plan.lastPaid = now;
 
-    currentUser.balance += plan.dailyProfit;
+        let distance = nextPaymentTime - now;
 
-    addTransaction(
-        "Investment Earning",
-        plan.dailyProfit,
-        "Approved",
-        `${plan.name} Daily Profit`
-    );
-
-    await saveUser(currentUser);
-
-    showAlert(
-        "Earning Credited 💰",
-        `${formatMoney(plan.dailyProfit)} added from ${plan.name}`,
-        "success"
-    );
-}
-        if(distance <= 0 && plan.status === "Active"){
-            await deleteDoc(doc(db, "investments", plan.id));
-            showAlert("Investment Completed 🎉", `${plan.name} Completed!\nYou earned ${formatMoney(plan.totalProfit)} in total profit.`, "success");
-            setTimeout(() => location.reload(), 2500);
+        if (distance < 0) {
+            distance = 0;
         }
+
+        let hours = Math.floor(distance / (1000 * 60 * 60));
+
+        let minutes = Math.floor(
+            (distance % (1000 * 60 * 60)) / (1000 * 60)
+        );
+
+        let seconds = Math.floor(
+            (distance % (1000 * 60)) / 1000
+        );
+
+        let el = document.getElementById(`countdown-${plan.id}`);
+
+        if (el) {
+            el.innerText =
+                hours + "h " +
+                minutes + "m " +
+                seconds + "s";
+        }
+
+        let daysLeft = Math.ceil(
+            (plan.endTime - now) / (1000 * 60 * 60 * 24)
+        );
+
+        let elDays = document.getElementById(`daysleft-${plan.id}`);
+
+        if (elDays) {
+            elDays.innerText = daysLeft > 0 ? daysLeft : 0;
+        }
+
+        let progress = (
+            (now - plan.startTime) /
+            (100 * 24 * 60 * 60 * 1000)
+        ) * 100;
+
+        let elProgress = document.getElementById(`progress-${plan.id}`);
+
+        if (elProgress) {
+            elProgress.style.width = progress + "%";
+        }
+
+        if (plan.endTime <= now && plan.status === "Active") {
+
+            clearInterval(activeIntervals[plan.id]);
+
+            await deleteDoc(doc(db, "investments", plan.id));
+
+            showAlert(
+                "Investment Completed 🎉",
+                `${plan.name} completed!`,
+                "success"
+            );
+        }
+
     }, 1000);
 }
 

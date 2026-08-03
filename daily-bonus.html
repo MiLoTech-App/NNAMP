@@ -124,7 +124,11 @@
                 <button class="btn" style="font-size:18px; padding:15px 40px;" onclick="claimBonus()">🎁 Claim ₦20 Now</button>
             </div>
 
-            <p id="claimedMsg" style="display:none; color:green; font-weight:bold;">✅ Already Claimed Today. Come back tomorrow 12AM!</p>
+            <p id="claimedMsg" style="display:none; color:green; font-weight:bold;">
+    Already Claimed ⚠️<br>
+    You already claimed today's bonus ✅️<br>
+    Check back tomorrow 🤩
+</p>
             <p id="timer" style="color:#888; font-size:14px;"></p>
         </div>
 
@@ -157,6 +161,7 @@ initSessionManager(auth);
 const DAILY_BONUS = 20;
 
 let currentUser = null;
+let isClaimingBonus = false;
 // CUSTOM POPUP FUNCTIONS
 function showAlert(title, message, type = "info") {
     let alertDiv = document.createElement("div");
@@ -237,7 +242,19 @@ onAuthStateChanged(auth, async(user)=>{
 
 async function claimBonus() {
 
+    if (isClaimingBonus) {
+        return;
+    }
+
+    isClaimingBonus = true;
+
+    document.querySelector("#bonusBox button").disabled = true;
+
     if (!currentUser) {
+
+        isClaimingBonus = false;
+
+        document.querySelector("#bonusBox button").disabled = false;
 
         showAlert(
             "Error ❌",
@@ -252,14 +269,18 @@ async function claimBonus() {
 
     if (currentUser.lastBonusClaim === today) {
 
-        showAlert(
-            "Already Claimed ⚠️",
-            "You already claimed today's bonus. Check back tomorrow🤩.",
-            "error"
-        );
+    isClaimingBonus = false;
 
-        return;
-    }
+    document.querySelector("#bonusBox button").disabled = false;
+
+    showAlert(
+        "Already Claimed ⚠️",
+        "You already claimed today's bonus. Check back tomorrow🤩.",
+        "error"
+    );
+
+    return;
+}
 
     try {
 
@@ -299,11 +320,13 @@ async function claimBonus() {
             `₦${DAILY_BONUS} has been added to your balance.`,
             "success"
         );
-
+isClaimingBonus = false;
     } catch(error){
 
         console.error(error);
+isClaimingBonus = false;
 
+document.querySelector("#bonusBox button").disabled = false;
         showAlert(
             "Error ❌",
             "Unable to claim today's bonus.",

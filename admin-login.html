@@ -102,6 +102,20 @@ window.togglePassword = togglePassword;
         }
 
         const user = userSnap.data();
+        // Check if account is suspended
+
+if (user.status === "suspended") {
+
+    showAlert(
+        "Account Suspended ❌",
+        "Your account has been suspended. Contact support/Senior-Admin.",
+        "error"
+    );
+
+    await signOut(auth);
+
+    return;
+}
 
         // Check admin permission
         if(user.admin !== true){

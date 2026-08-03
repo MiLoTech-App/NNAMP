@@ -1,3 +1,9 @@
+import { db } from "./firebase.js";
+
+import {
+    doc,
+    onSnapshot
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 // ======================================
 // NNAMP SESSION MANAGER
 // ======================================
@@ -89,6 +95,34 @@ export function initSessionManager(auth) {
         }
 
     };
+    auth.onAuthStateChanged((user) => {
+
+    if (!user) return;
+
+    onSnapshot(doc(db, "users", user.uid), (snap) => {
+
+        if (!snap.exists()) return;
+
+        const userData = snap.data();
+
+        if (
+    userData.status === "suspended" &&
+    userData.admin !== true
+) {
+
+    showAlert(
+        "Account Suspended ❌",
+        "Your account has been suspended.\n\nContact support/Admin.",
+        "error"
+    );
+
+    window.logoutUser();
+
+}
+
+    });
+
+});
         // ======================================
     // USER LEAVES / RETURNS
     // ======================================

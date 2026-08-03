@@ -74,19 +74,37 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 console.log("Firebase module loaded");
 // GLOBAL CUSTOM ALERT - UPDATED
-function showAlert(title, message, type = "info") {
+function showAlert(title, message, type = "info", onClose = null) {
+
     let alertDiv = document.createElement("div");
+
     alertDiv.className = "custom-alert";
+
     alertDiv.innerHTML = `
         <div class="custom-alert-box ${type}">
             <h3>${title}</h3>
             <p>${message}</p>
-            <button class="custom-alert-btn" onclick="this.closest('.custom-alert').remove()">OK</button>
+            <button class="custom-alert-btn">OK</button>
         </div>
     `;
+
     document.body.appendChild(alertDiv);
-    // AUTO CLOSE AFTER 2.5s
-    setTimeout(() => { if(document.body.contains(alertDiv)){ alertDiv.remove(); } }, 20000);
+
+    function closeAlert() {
+
+        if (document.body.contains(alertDiv)) {
+            alertDiv.remove();
+        }
+
+        if (onClose) {
+            onClose();
+        }
+    }
+
+    alertDiv.querySelector(".custom-alert-btn")
+        .onclick = closeAlert;
+
+    setTimeout(closeAlert, 20000);
 }
 
 window.onload = function() {
@@ -215,14 +233,13 @@ localStorage.removeItem("referralCode");
     showAlert(
     "Success ✅\nWelcome to NNAMP 🎉",
     "Account created successfully!\n\n🔒 Security Reminder\nPlease save your password in a safe place.\n\nFor security purposes, password recovery is currently unavailable. You will need your password to access your account.\n\nHappy investing! 👍🤩",
-    "success"
-);
-
-    setTimeout(() => {
+    "success",
+    function () {
 
         window.location.href = "login.html";
 
-    }, 20000);
+    }
+);
 
 } catch(error){
 

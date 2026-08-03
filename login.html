@@ -129,7 +129,18 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         }
 
         const user = userSnap.data();
+if (user.status === "suspended") {
 
+    showAlert(
+        "Account Suspended ❌",
+        "Your account has been suspended.\n\nContact support/Admin.",
+        "error"
+    );
+
+    await signOut(auth);
+
+    return;
+}
 
 
         showAlert(

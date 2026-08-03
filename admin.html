@@ -30,7 +30,25 @@ input,textarea{width:100%;padding:10px;margin:5px 0;background:#2a2a3e;color:#ff
 
  /* CUSTOM POPUP - ADDED */
 .custom-alert {position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 99999; animation: popIn 0.3s ease;}
-.custom-alert-box {background: #1a1a2e; padding: 25px 20px; border-radius: 15px; text-align: center; width: 90%; max-width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-top: 4px solid #007bff; white-space: pre-line;}
+.custom-alert-box {
+
+    background: #1a1a2e;
+    padding: 25px 20px;
+    border-radius: 15px;
+    text-align: center;
+    width: 90%;
+    max-width: 350px;
+
+    max-height: 80vh;
+
+    overflow-y: auto;
+
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+
+    border-top: 4px solid #007bff;
+
+    white-space: pre-line;
+}
 .custom-alert-box.success { border-top: 4px solid #198754; }
 .custom-alert-box.error { border-top: 4px solid #dc3545; }
 .custom-alert-box.info { border-top: 4px solid #007bff; }
@@ -169,8 +187,33 @@ h2{font-size:20px;}
             <label>Account No</label><input type="text" id="editAcc">
             <label>Account Name</label><input type="text" id="editName">
             <label>New Password</label><input type="text" id="editPass" placeholder="Leave blank to keep old">
-            <button class="btn green" onclick="saveUserChanges()">Save Changes</button>
-            <button class="btn red" onclick="deleteUser()">Delete User</button>
+            <button class="btn green" onclick="saveUserChanges()">
+    Save Changes
+</button>
+
+<button
+    id="suspendBtn"
+    class="btn"
+    style="background:orange;"
+    onclick="suspendUser()">
+
+    Suspend User
+
+</button>
+
+<button
+    id="reactivateBtn"
+    class="btn green"
+    onclick="reactivateUser()">
+
+    Reactivate User
+
+</button>
+
+<button class="btn red"
+onclick="deleteUser()">
+    Delete User
+</button>
         </div>
     </div>
     <div id="savings" class="tab-content">
@@ -341,17 +384,32 @@ import {
 initSessionManager(auth);
 // ========== CUSTOM POPUP FUNCTIONS - ADDED ==========
 function showAlert(title, message, type = "info") {
+
     let alertDiv = document.createElement("div");
+
     alertDiv.className = "custom-alert";
+
     alertDiv.innerHTML = `
+
         <div class="custom-alert-box ${type}">
+
             <h3>${title}</h3>
+
             <p>${message}</p>
-            <button class="custom-alert-btn" onclick="this.closest('.custom-alert').remove()">OK</button>
+
+            <button class="custom-alert-btn"
+            onclick="this.closest('.custom-alert').remove()">
+
+                OK
+
+            </button>
+
         </div>
+
     `;
+
     document.body.appendChild(alertDiv);
-    setTimeout(() => { if(document.body.contains(alertDiv)){ alertDiv.remove(); } }, 3000);
+
 }
 
 function showConfirm(title, message, onConfirm) {
@@ -466,6 +524,8 @@ async function loadAllUsers() {
             <th>Name</th>
             <th>Phone</th>
             <th>Balance</th>
+            <th>Savings</th>
+            <th>Investments</th>
             <th>Joined</th>
             <th>Action</th>
         </tr>`;
@@ -475,41 +535,121 @@ async function loadAllUsers() {
 
             rows += `
             <tr>
-                <td colspan="5">
+                <td colspan="7">
                     No users found
                 </td>
             </tr>`;
 
         } else {
 
+const investmentsSnap = await getDocs(
+    collection(db, "investments")
+);
+
+const investmentsMap = {};
+
+investmentsSnap.forEach(docSnap => {
+
+    const inv = docSnap.data();
+
+    if (inv.status === "Active") {
+
+        investmentsMap[inv.userId] = inv;
+    }
+
+});
 
             usersSnap.forEach((docSnap)=>{
 
                 const u = docSnap.data();
+const savings = u.savings || [];
 
+let savingInfo = "-";
 
-                rows += `
-                <tr>
-                    <td>${u.fullname || "No Name"}</td>
+const activeSaving = savings.find(
+    s => s.status === "Active"
+);
 
-                    <td>${u.phone || "-"}</td>
+if (activeSaving) {
 
-                    <td>
-                    ₦${Number(u.balance || 0).toLocaleString()}
-                    </td>
+    savingInfo = `
+        ${activeSaving.plan}<br>
 
-                    <td>
-                    ${u.joined || "-"}
-                    </td>
+        ₦${Number(
+            activeSaving.amount
+        ).toLocaleString()}<br>
 
-                    <td>
-                    <button class="btn" 
-                    onclick="manageUser('${docSnap.id}')">
-                    Manage
-                    </button>
-                    </td>
+        <small>
+            ${new Date(
+                activeSaving.startDate
+            ).toLocaleString()}
+        </small>
+    `;
+}
+               const investment = investmentsMap[docSnap.id];
 
-                </tr>`;
+let investmentInfo = "-";
+
+if (investment) {
+
+    investmentInfo = `
+        ${investment.name}<br>
+        ₦${Number(
+            investment.amount
+        ).toLocaleString()}<br>
+
+        <small>
+            ${new Date(
+                investment.startTime
+            ).toLocaleString()}
+        </small>
+    `;
+}
+
+rows += `
+<tr>
+
+<td>${u.fullname || "No Name"}</td>
+
+<td>${u.phone || "-"}</td>
+
+<td>
+₦${Number(u.balance || 0).toLocaleString()}
+</td>
+
+<td>
+    <button class="btn"
+    onclick="viewSavings('${docSnap.id}')">
+    View Savings
+    </button>
+</td>
+
+<td>
+    <button class="btn"
+    onclick="viewInvestments('${docSnap.id}')">
+    View Investments
+    </button>
+</td>
+
+<td>
+    ${
+        u.joined
+            ? new Date(u.joined).toLocaleString()
+            : "-"
+    }
+</td>
+
+<td>
+
+<button class="btn"
+onclick="manageUser('${docSnap.id}')">
+Manage
+</button>
+
+</td>
+
+</tr>`;
+
 
             });
 
@@ -555,7 +695,30 @@ async function manageUser(uid) {
 
 
         const user = userSnap.data();
+const suspendBtn = document.getElementById("suspendBtn");
+const reactivateBtn = document.getElementById("reactivateBtn");
 
+if (user.status === "suspended") {
+
+    suspendBtn.innerText = "Suspended";
+    suspendBtn.disabled = true;
+    suspendBtn.style.opacity = "0.6";
+
+    reactivateBtn.innerText = "Reactivate User";
+    reactivateBtn.disabled = false;
+    reactivateBtn.style.opacity = "1";
+
+} else {
+
+    suspendBtn.innerText = "Suspend User";
+    suspendBtn.disabled = false;
+    suspendBtn.style.opacity = "1";
+
+    reactivateBtn.innerText = "Reactivated";
+    reactivateBtn.disabled = true;
+    reactivateBtn.style.opacity = "0.6";
+
+}
 
         document.getElementById('manageBox').style.display = 'block';
 
@@ -707,6 +870,130 @@ async function deleteUser(){
             }
 
         }
+    );
+
+}
+async function suspendUser() {
+
+    showConfirm(
+
+        "Suspend User ⚠️",
+
+        "Are you sure you want to suspend this account?",
+
+        async function () {
+
+            try {
+
+                const uid =
+                document.getElementById(
+                    "editPhoneHidden"
+                ).value;
+
+                await updateDoc(
+                    doc(db, "users", uid),
+                    {
+                        status: "suspended"
+                    }
+                );
+
+                document.getElementById(
+                    "suspendBtn"
+                ).innerText = "Suspended";
+
+                document.getElementById(
+                    "suspendBtn"
+                ).disabled = true;
+
+                document.getElementById(
+                    "reactivateBtn"
+                ).innerText = "Reactivate User";
+
+                document.getElementById(
+                    "reactivateBtn"
+                ).disabled = false;
+
+                showAlert(
+                    "Success ✅",
+                    "User suspended successfully.",
+                    "success"
+                );
+
+            } catch (error) {
+
+                showAlert(
+                    "Error ❌",
+                    "Could not suspend user.",
+                    "error"
+                );
+
+            }
+
+        }
+
+    );
+
+}
+
+
+async function reactivateUser() {
+
+    showConfirm(
+
+        "Reactivate User ✅",
+
+        "Are you sure you want to reactivate this account?",
+
+        async function () {
+
+            try {
+
+                const uid =
+                document.getElementById(
+                    "editPhoneHidden"
+                ).value;
+
+                await updateDoc(
+                    doc(db, "users", uid),
+                    {
+                        status: "active"
+                    }
+                );
+
+                document.getElementById(
+                    "reactivateBtn"
+                ).innerText = "Reactivated";
+
+                document.getElementById(
+                    "reactivateBtn"
+                ).disabled = true;
+
+                document.getElementById(
+                    "suspendBtn"
+                ).innerText = "Suspend User";
+
+                document.getElementById(
+                    "suspendBtn"
+                ).disabled = false;
+
+                showAlert(
+                    "Success ✅",
+                    "User account has been reactivated successfully.",
+                    "success"
+                );
+
+            } catch (error) {
+
+                showAlert(
+                    "Error ❌",
+                    "Could not reactivate user.",
+                    "error"
+                );
+
+            }
+
+        }
+
     );
 
 }
@@ -1781,6 +2068,148 @@ Do you want to continue?`,
     }
 
 }
+async function viewSavings(uid) {
+
+    const userSnap = await getDoc(
+        doc(db, "users", uid)
+    );
+
+    if (!userSnap.exists()) {
+
+        return showAlert(
+            "Error ❌",
+            "User not found.",
+            "error"
+        );
+
+    }
+
+    const savings = userSnap.data().savings || [];
+
+    if (savings.length === 0) {
+
+        return showAlert(
+            "No Savings",
+            "This user has no savings plan.",
+            "info"
+        );
+
+    }
+
+    let message = "";
+
+    savings.forEach((s, index) => {
+
+        message +=
+
+`🏦 SAVINGS ${index + 1}
+
+${s.plan} (${s.days} days)
+
+💰 Amount: ₦${Number(
+    s.amount
+).toLocaleString()}
+
+📈 Daily Earnings: ₦${Number(
+    s.dailyEarn || 0
+).toLocaleString()}
+
+💵 Total Return: ₦${Number(
+    s.totalReturn || 0
+).toLocaleString()}
+
+🟢 Status: ${s.status}
+
+📅 Started:
+
+${new Date(
+    s.startDate
+).toLocaleString()}
+
+⏰ Maturity:
+
+${new Date(
+    s.maturityDate
+).toLocaleString()}
+
+════════════════════
+
+`;
+
+    });
+
+    showAlert(
+        "User Savings",
+        message,
+        "info"
+    );
+
+}
+async function viewInvestments(uid) {
+
+    const investmentsSnap = await getDocs(
+        collection(db, "investments")
+    );
+
+    let message = "";
+
+    let count = 0;
+
+    investmentsSnap.forEach((docSnap) => {
+
+        const inv = docSnap.data();
+
+        if (inv.userId === uid) {
+
+            count++;
+
+            message +=
+
+`💼 INVESTMENT ${count}
+
+${inv.name}
+
+💰 Amount: ₦${Number(
+    inv.amount
+).toLocaleString()}
+
+📈 Daily Profit: ₦${Number(
+    inv.dailyProfit || 0
+).toLocaleString()}
+
+🟢 Status: ${inv.status}
+
+📅 Started:
+
+${new Date(
+    inv.startTime
+).toLocaleString()}
+
+════════════════════
+
+`;
+
+        }
+
+    });
+
+    if (count === 0) {
+
+        return showAlert(
+            "No Investments",
+            "This user has no investments.",
+            "info"
+        );
+
+    }
+
+    showAlert(
+        "User Investments",
+        message,
+        "info"
+    );
+
+}
 window.showTab = showTab;
 window.loadAllUsers = loadAllUsers;
 window.loadPendingDeposits = loadPendingDeposits;
@@ -1790,6 +2219,8 @@ window.sendNotificationToAll = sendNotificationToAll;
 window.manageUser = manageUser;
 window.saveUserChanges = saveUserChanges;
 window.deleteUser = deleteUser;
+window.suspendUser = suspendUser;
+window.reactivateUser = reactivateUser;
 window.approveDeposit = approveDeposit;
 window.rejectDeposit = rejectDeposit;
 window.showConfirm = showConfirm;
@@ -1800,6 +2231,8 @@ window.adminCreateSaving = adminCreateSaving;
 window.loadSavingUsers = loadSavingUsers;
 window.loadInvestmentUsers = loadInvestmentUsers;
 window.adminCreateInvestment = adminCreateInvestment;
+window.viewSavings = viewSavings;
+window.viewInvestments = viewInvestments;
 </script>
 <!-- NNAMP AUTO LOGOUT POPUP -->
 
