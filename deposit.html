@@ -122,7 +122,13 @@
                 <input type="file" id="proof" accept="image/*" style="width:100%; padding:10px; margin:10px 0; border:1px solid #ddd; border-radius:8px;">
             </div>
 
-            <button class="btn" onclick="submitDeposit()" style="width:100%; background:#0d6e2f;">I Have Paid ✅</button>
+            <button
+    class="btn"
+    id="depositBtn"
+    onclick="submitDeposit()"
+    style="width:100%; background:#0d6e2f;">
+    I Have Paid ✅
+</button>
 
             <p style="font-size:12px; color:#888; margin-top:10px;">Note: Deposits are automatically approved by the system within 1-5 minutes.</p>
         </div>
@@ -170,6 +176,7 @@ import {
 initSessionManager(auth);
 
 let currentUser = null;
+let isSubmittingDeposit = false;
 
 onAuthStateChanged(auth, async (user) => {
 
@@ -298,13 +305,36 @@ let proofImg = proof
 
 async function submitDeposit() {
 
-    let amount = parseFloat(document.getElementById('depositAmount').value);
-    let proofFile = document.getElementById('proof').files[0];
-
-    if (!amount || amount < 3000) {
-        showAlert("Error ❌", "Minimum deposit is ₦3,000", "error");
+    // PREVENT DOUBLE CLICK
+    if (isSubmittingDeposit) {
         return;
     }
+
+    const depositBtn = document.getElementById("depositBtn");
+
+    let amount = parseFloat(
+        document.getElementById('depositAmount').value
+    );
+
+    let proofFile =
+        document.getElementById('proof').files[0];
+
+    if (!amount || amount < 3000) {
+        showAlert(
+            "Error ❌",
+            "Minimum deposit is ₦3,000",
+            "error"
+        );
+        return;
+    }
+
+    // LOCK IMMEDIATELY
+    isSubmittingDeposit = true;
+
+    depositBtn.disabled = true;
+    depositBtn.style.opacity = "0.6";
+    depositBtn.style.cursor = "not-allowed";
+    depositBtn.innerText = "Submitting... ⏳";
 
     try {
 
@@ -336,30 +366,36 @@ async function submitDeposit() {
         }
 
         // Save deposit
-        await addDoc(collection(db, "deposits"), {
+        await addDoc(
+            collection(db, "deposits"),
+            {
+                userId: currentUser.uid,
+                phone: currentUser.phone,
+                fullname: currentUser.fullname,
 
-            userId: currentUser.uid,
-            phone: currentUser.phone,
-            fullname: currentUser.fullname,
+                amount: amount,
+                status: "Pending",
 
-            amount: amount,
-            status: "Pending",
+                proofUrl: proofUrl,
 
-            proofUrl: proofUrl,
-
-            date: new Date().toLocaleString(),
-            createdAt: Date.now()
-
-        });
+                date: new Date().toLocaleString(),
+                createdAt: Date.now()
+            }
+        );
 
         // Save deposit transaction
-        const userRef = doc(db, "users", currentUser.uid);
+        const userRef = doc(
+            db,
+            "users",
+            currentUser.uid
+        );
 
         const userSnap = await getDoc(userRef);
 
         const userData = userSnap.data();
 
-        const transactions = userData.transactions || [];
+        const transactions =
+            userData.transactions || [];
 
         transactions.push({
             id: Date.now(),
@@ -379,6 +415,7 @@ async function submitDeposit() {
             `₦${amount.toLocaleString()} deposit is pending admin approval.`
         );
 
+        // SUCCESS
         showAlert(
             "Submitted ⏳",
             `Deposit Request Submitted!\n\n₦${amount.toLocaleString()}\n\nStatus: Pending Admin Approval`,
@@ -389,18 +426,31 @@ async function submitDeposit() {
         document.getElementById('proof').value = "";
         document.getElementById('proofSection').style.display = "none";
 
+        // IMPORTANT:
+        // DO NOT UNLOCK THE BUTTON AFTER SUCCESS.
+        // It remains disabled to prevent another submission.
+
+        depositBtn.innerText = "Deposit Submitted ✓";
+
     } catch (error) {
 
         console.error(error);
 
+        // ONLY UNLOCK IF SOMETHING FAILED
+        isSubmittingDeposit = false;
+
+        depositBtn.disabled = false;
+        depositBtn.style.opacity = "1";
+        depositBtn.style.cursor = "pointer";
+        depositBtn.innerText = "I Have Paid ✅";
+
         showAlert(
             "Deposit Error ❌",
-            error.message,
+            error.message ||
+            "Unable to submit deposit. Please try again.",
             "error"
         );
-
     }
-
 }
 async function uploadProof(docId) {
 

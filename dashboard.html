@@ -188,6 +188,8 @@ select {
 </div>
 
 <script type="module">
+  import { purchaseInvestment } from "./investmentPurchase.js";
+  
 import { auth, db } from "./firebase.js";
 
 import { initSessionManager } from "./session.js";
@@ -573,119 +575,120 @@ document.getElementById("totalReferrals").innerText =
     referralSnap.size;
 }
 
-function buyPlan(name, amount, percent){
-    console.log("Before:", currentUser.balance, typeof currentUser.balance); // DEBUG
+async function buyPlan(name, amount, percent) {
 
-    currentUser.balance = parseFloat(currentUser.balance) || 0;
-    currentUser.lockedBonus = parseFloat(currentUser.lockedBonus) || 0;
-
-    let withdrawableBalance = currentUser.balance - currentUser.lockedBonus;
-    if(amount > withdrawableBalance){
-        showAlert('Insufficient Balance ❌', 'Available: ' + formatMoney(withdrawableBalance), 'error');
+    if (!currentUser || !auth.currentUser) {
+        showAlert(
+            "Login Required ❌",
+            "Please log in again.",
+            "error"
+        );
         return;
     }
 
-    // ADDED CONFIRM POPUP
-    showConfirm("Confirm Investment", `Invest ${formatMoney(amount)} in ${name}?`, async function(){
-    const dailyProfit = amount * percent;
-const totalProfit = dailyProfit * 100;
+    currentUser.balance =
+        Number(currentUser.balance) || 0;
 
-await addDoc(
-    collection(db, "investments"),
-    {
-        userId: auth.currentUser.uid,
-        phone: currentUser.phone,
-        name: name,
-        amount: amount,
-        percent: percent,
-        dailyProfit: dailyProfit,
-        totalProfit: totalProfit,
-        startTime: Date.now(),
-        endTime: Date.now() + (100 * 24 * 60 * 60 * 1000),
-        lastPaid: Date.now(),
-        status: "Active"
+    currentUser.lockedBonus =
+        Number(currentUser.lockedBonus) || 0;
+
+    const availableBalance =
+        currentUser.balance -
+        currentUser.lockedBonus;
+
+    if (amount > availableBalance) {
+
+        showAlert(
+            "Insufficient Balance ❌",
+            "Available: " +
+            formatMoney(availableBalance),
+            "error"
+        );
+
+        return;
     }
-);
 
-        currentUser.balance = currentUser.balance - amount; // DEDUCT
+    showConfirm(
+        "Confirm Investment",
+        `Invest ${formatMoney(amount)} in ${name}?`,
+        async function () {
 
-        console.log("After:", currentUser.balance); // DEBUG
+            try {
 
-        let isFirstInvestment =!currentUser.hasInvested;
-        if(isFirstInvestment){
-            currentUser.hasInvested = true;
-            currentUser.lockedBonus = 0;
-            if(currentUser.referredBy){
-                let referrerPhone = currentUser.referredBy;
-                let bonus = amount * 0.15;
-                const referrerQuery = await getDocs(
-    collection(db, "users")
-);
+                const result =
+                    await purchaseInvestment({
+                        db,
+                        auth,
+                        name,
+                        amount,
+                        percent
+                    });
 
-for (const refDoc of referrerQuery.docs) {
+                /*
+                    Update local page state only AFTER
+                    Firestore successfully completes.
+                */
+                currentUser.balance =
+                    result.newBalance;
 
-    const refData = refDoc.data();
+                currentUser.hasInvested = true;
 
-    if (refData.phone === referrerPhone) {
+                currentUser.lockedBonus = 0;
 
-        await updateDoc(refDoc.ref, {
+                document.getElementById(
+                    "balanceAmount"
+                ).innerText =
+                    formatMoney(currentUser.balance);
 
-            balance: (Number(refData.balance) || 0) + bonus,
+                document.getElementById(
+                    "walletStat"
+                ).innerText =
+                    formatMoney(currentUser.balance);
 
-            referralBonus:
-                (Number(refData.referralBonus) || 0) + bonus
+                if (typeof updateStats === "function") {
+                    await updateStats();
+                }
 
-        });
+                if (result.referralBonus > 0) {
 
-        break;
-    }
-}
-                const referralRef = collection(
-    db,
-    "users",
-    refDoc.id,
-    "referrals"
-);
+                    showAlert(
+                        "Investment Activated 🎉",
+                        `${name} activated successfully.\n\n` +
+                        `${formatMoney(result.dailyProfit)} daily profit for 100 days.\n\n` +
+                        `${formatMoney(result.referralBonus)} referral bonus was sent to your referrer.`,
+                        "success"
+                    );
 
-await addDoc(referralRef, {
+                } else {
 
-    fullname: currentUser.fullname,
+                    showAlert(
+                        "Investment Activated ✅",
+                        `${name} activated successfully.\n\n` +
+                        `${formatMoney(result.dailyProfit)} daily profit for 100 days.`,
+                        "success"
+                    );
+                }
 
-    phone: currentUser.phone,
+                setTimeout(() => {
+                    location.reload();
+                }, 1800);
 
-    earned: bonus,
+            } catch (error) {
 
-    status: "Active",
+                console.error(
+                    "Investment purchase failed:",
+                    error
+                );
 
-    joined: serverTimestamp()
-
-});
-                addTransaction('Referral Bonus Paid', bonus, 'Approved', `15% bonus for referring ${currentUser.fullname}`);
-                showAlert(`🎉 First Investment!`, `Your ₦1000 bonus is now unlocked.\n${formatMoney(bonus)} referral bonus sent to your referrer.`, "success");
+                showAlert(
+                    "Investment Failed ❌",
+                    error.message ||
+                    "The investment could not be completed. Your account was not changed.",
+                    "error"
+                );
             }
         }
-
-        await updateDoc(
-    doc(db, "users", auth.currentUser.uid),
-    {
-        balance: currentUser.balance,
-        lockedBonus: currentUser.lockedBonus || 0,
-        hasInvested: currentUser.hasInvested || false
-    }
-);
-        document.getElementById('balanceAmount').innerText = formatMoney(currentUser.balance);
-document.getElementById('walletStat').innerText = formatMoney(currentUser.balance);
-        addTransaction('Investment', amount, 'Approved', `Bought ${name}`);
-        updateStats();
-
-        setTimeout(() => {
-    location.reload();
-}, 1500);
-
-        if(!isFirstInvestment){
-            showAlert("Investment Activated ✅", `${name} activated!\n${formatMoney(dailyProfit)} daily profit`, "success");
-        }
-    });
+    );
 }
 
 function initDashboard() {

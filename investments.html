@@ -135,6 +135,8 @@
 </div>
 
 <script type="module">
+  import { purchaseInvestment } from "./investmentPurchase.js";
+  
   import { auth, db } from "./firebase.js";
   
   import { initSessionManager } from "./session.js";
@@ -284,130 +286,114 @@ async function initializePage() {
 }
 
 
-function buyPlan(name, amount, percent){
-    let withdrawableBalance = currentUser.balance - (currentUser.lockedBonus || 0);
-    if(amount > withdrawableBalance){
-        if(currentUser.lockedBonus > 0){
-            showAlert("Deposit Required 🔒", "You need to make your first deposit to unlock your full balance for investment.", "error");
-        } else {
-            showAlert("Insufficient Balance ❌", `Available: ${formatMoney(withdrawableBalance)}`, "error");
-        }
+async function buyPlan(name, amount, percent) {
+
+    if (!currentUser || !auth.currentUser) {
+        showAlert(
+            "Login Required ❌",
+            "Please log in again.",
+            "error"
+        );
         return;
     }
 
-    // FIXED: REPLACED UGLY CONFIRM WITH BEAUTIFUL POPUP
+    currentUser.balance =
+        Number(currentUser.balance) || 0;
+
+    currentUser.lockedBonus =
+        Number(currentUser.lockedBonus) || 0;
+
+    const availableBalance =
+        currentUser.balance -
+        currentUser.lockedBonus;
+
+    if (amount > availableBalance) {
+
+        if (currentUser.lockedBonus > 0) {
+
+            showAlert(
+                "Deposit Required 🔒",
+                "You need to make your first deposit to unlock your full balance for investment.",
+                "error"
+            );
+
+        } else {
+
+            showAlert(
+                "Insufficient Balance ❌",
+                `Available: ${formatMoney(availableBalance)}`,
+                "error"
+            );
+        }
+
+        return;
+    }
+
     showConfirm(
         "Confirm Investment",
         `Invest ${formatMoney(amount)} in ${name}?\nDaily Profit: ${formatMoney(amount * percent)} for 100 days`,
-        async function() {
-            currentUser.balance -= amount;
-            if(!currentUser.hasInvested){
+        async function () {
+
+            try {
+
+                const result =
+                    await purchaseInvestment({
+                        db,
+                        auth,
+                        name,
+                        amount,
+                        percent
+                    });
+
+                /*
+                    Update local state only after
+                    Firestore successfully commits.
+                */
+                currentUser.balance =
+                    result.newBalance;
+
                 currentUser.hasInvested = true;
+
                 currentUser.lockedBonus = 0;
-                if (currentUser.referredBy) {
 
-    const bonus = amount * 0.15;
+                if (result.referralBonus > 0) {
 
-    const refQuery = query(
-        collection(db, "users"),
-        where("phone", "==", currentUser.referredBy)
-    );
+                    showAlert(
+                        "Investment Activated 🎉",
+                        `${name} activated successfully!\n\n` +
+                        `${formatMoney(result.dailyProfit)} daily profit for 100 days.\n\n` +
+                        `${formatMoney(result.referralBonus)} referral bonus sent to your referrer.`,
+                        "success"
+                    );
 
-    const refSnapshot = await getDocs(refQuery);
+                } else {
 
-    if (!refSnapshot.empty) {
+                    showAlert(
+                        "Investment Activated ✅",
+                        `${name} activated successfully!\n\n` +
+                        `${formatMoney(result.dailyProfit)} daily profit for 100 days.`,
+                        "success"
+                    );
+                }
 
-        const refDoc = refSnapshot.docs[0];
+                setTimeout(() => {
+                    location.reload();
+                }, 1800);
 
-        await updateDoc(refDoc.ref, {
-    balance: increment(bonus),
-    totalEarned: increment(bonus),
-    referralBonus: increment(bonus)
-});
-const refUserSnap = await getDoc(refDoc.ref);
+            } catch (error) {
 
-const refUserData = refUserSnap.data();
+                console.error(
+                    "Investment purchase failed:",
+                    error
+                );
 
-let refTransactions = refUserData.transactions || [];
-
-refTransactions.unshift({
-    id: Date.now(),
-    type: "Referral",
-    amount: bonus,
-    status: "Approved",
-    note: `Referral bonus from ${currentUser.fullname}`,
-    date: new Date().toLocaleString()
-});
-
-await updateDoc(refDoc.ref, {
-    transactions: refTransactions
-});
-await addDoc(collection(db, "referrals"), {
-    referrerId: refDoc.id,
-    referrerPhone: currentUser.referredBy,
-
-    referredUserId: auth.currentUser.uid,
-    referredName: currentUser.fullname,
-    referredPhone: currentUser.phone,
-
-    investmentAmount: amount,
-    bonus: bonus,
-
-    status: "Active",
-
-    createdAt: serverTimestamp()
-});
-
-        await addDoc(collection(db, "notifications"), {
-            userId: refDoc.id,
-            title: "Referral Bonus",
-            msg: `You received ${formatMoney(bonus)} for referring ${currentUser.name}.`,
-            read: false,
-            date: new Date().toLocaleString()
-        });
-    }
-}
+                showAlert(
+                    "Investment Failed ❌",
+                    error.message ||
+                    "The investment could not be completed. Your account was not changed.",
+                    "error"
+                );
             }
-            saveUser(currentUser);
-
-let dailyProfit = amount * percent;
-let totalProfit = dailyProfit * 100;
-
-// Save investment to Firebase
-await addDoc(collection(db, "investments"), {
-    userId: auth.currentUser.uid,
-    phone: currentUser.phone,
-    name: name,
-    amount: amount,
-    percent: percent,
-    dailyProfit: dailyProfit,
-    totalProfit: totalProfit,
-    startTime: Date.now(),
-    endTime: Date.now() + (100 * 24 * 60 * 60 * 1000),
-    lastPaid: Date.now(),
-    status: "Active"
-});
-
-currentUser.transactions = currentUser.transactions || [];
-
-currentUser.transactions.unshift({
-    id: Date.now(),
-    type: "Investment",
-    amount: amount,
-    status: "Approved",
-    date: new Date().toLocaleString(),
-    note: `Invested in ${name}`
-});
-
-await saveUser(currentUser);
-
-showAlert(
-    "Investment Activated ✅",
-    `${name} activated!\n${formatMoney(dailyProfit)} daily for 100 days.`,
-    "success"
-);
-
-setTimeout(() => location.reload(), 2000);
         }
     );
 }

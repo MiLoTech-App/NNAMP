@@ -130,6 +130,7 @@ function saveUsers(users) { localStorage.setItem('nnampUsers', JSON.stringify(us
 
 let currentUser = null;
 let currentUserDocId = null;
+let isSubmittingWithdrawal = false;
 
 onAuthStateChanged(auth, async (user) => {
 
@@ -281,77 +282,176 @@ function showAlert(title, message, type = "info") {
 // ========== END CUSTOM ALERT ==========
 
 async function submitWithdrawal() {
-    let amount = parseFloat(document.getElementById('withdrawAmount').value);
 
-    if(!amount || amount < 1000) {
-        showAlert('Error ❌', 'Minimum withdrawal is ₦1,000', 'error');
-        return;
-    }
-    if(amount > currentUser.balance){
-        showAlert('Error ❌', 'Insufficient Balance. Your balance: ₦' + currentUser.balance.toLocaleString(), 'error');
-        return;
-    }
-    if(!currentUser.bank){
-        showAlert('Info ℹ️', 'Please add bank details in Settings first', 'info');
+    // PREVENT DOUBLE CLICK
+    if (isSubmittingWithdrawal) {
         return;
     }
 
-    // DEDUCT BALANCE
-    currentUser.balance -= amount;
-    await saveUser(currentUser);
+    const withdrawBtn =
+        document.getElementById("withdrawBtn");
 
-    // CREATE PENDING WITHDRAWAL IN FIRESTORE
-await addDoc(collection(db, "withdrawals"), {
-    userId: currentUserDocId,
-    phone: currentUser.phone,
-    fullname: currentUser.fullname,
-    amount: amount,
-    fee: amount * 0.07,
-    netAmount: amount - (amount * 0.07),
-    bank: currentUser.bank,
-    accountNo: currentUser.accountNo,
-    accountName: currentUser.accountName,
-    status: "Pending",
-    createdAt: serverTimestamp()
-});
-// Save withdrawal to transaction history
-const userRef = doc(db, "users", currentUserDocId);
+    let amount = parseFloat(
+        document.getElementById('withdrawAmount').value
+    );
 
-const userSnap = await getDoc(userRef);
+    if (!amount || amount < 1000) {
+        showAlert(
+            'Error ❌',
+            'Minimum withdrawal is ₦1,000',
+            'error'
+        );
+        return;
+    }
 
-const userData = userSnap.data();
+    if (amount > currentUser.balance) {
+        showAlert(
+            'Error ❌',
+            'Insufficient Balance. Your balance: ₦' +
+            currentUser.balance.toLocaleString(),
+            'error'
+        );
+        return;
+    }
 
-const transactions = userData.transactions || [];
+    if (!currentUser.bank) {
+        showAlert(
+            'Info ℹ️',
+            'Please add bank details in Settings first',
+            'info'
+        );
+        return;
+    }
 
-transactions.push({
-    id: Date.now(),
-    type: "Withdrawal",
-    amount: amount,
-    status: "Pending",
-    date: new Date().toLocaleString(),
-    note: "Wallet Withdrawal"
-});
+    // LOCK IMMEDIATELY
+    isSubmittingWithdrawal = true;
 
-await updateDoc(userRef, {
-    transactions: transactions
-});
-    // UPDATE UI
-    document.getElementById('sidebarBalance').innerText = '₦' + currentUser.balance.toLocaleString() + ' 👁️';
-    loadWithdrawHistory();
+    withdrawBtn.disabled = true;
+    withdrawBtn.style.opacity = "0.6";
+    withdrawBtn.style.cursor = "not-allowed";
+    withdrawBtn.innerText = "Submitting... ⏳";
 
-    let fee = amount * 0.07;
-    let net = amount - fee;
-    showAlert('Withdrawal Submitted ⏳',
-    'Requested: ₦' + amount.toLocaleString() +
-    '\nFee 7%: ₦' + fee.toLocaleString() +
-    '\nYou will receive: ₦' + net.toLocaleString() +
-    '\n\nStatus: Pending',
-    'info');
+    try {
 
-    document.getElementById('withdrawAmount').value = '';
-    document.getElementById('feeCalc').style.display = 'none';
+        // DEDUCT BALANCE
+        currentUser.balance -= amount;
+
+        await saveUser(currentUser);
+
+        // CREATE PENDING WITHDRAWAL
+        await addDoc(
+            collection(db, "withdrawals"),
+            {
+                userId: currentUserDocId,
+                phone: currentUser.phone,
+                fullname: currentUser.fullname,
+
+                amount: amount,
+
+                fee: amount * 0.07,
+
+                netAmount:
+                    amount - (amount * 0.07),
+
+                bank: currentUser.bank,
+                accountNo: currentUser.accountNo,
+                accountName: currentUser.accountName,
+
+                status: "Pending",
+
+                createdAt: serverTimestamp()
+            }
+        );
+
+        // SAVE WITHDRAWAL TRANSACTION
+        const userRef =
+            doc(db, "users", currentUserDocId);
+
+        const userSnap =
+            await getDoc(userRef);
+
+        const userData =
+            userSnap.data();
+
+        const transactions =
+            userData.transactions || [];
+
+        transactions.push({
+            id: Date.now(),
+            type: "Withdrawal",
+            amount: amount,
+            status: "Pending",
+            date: new Date().toLocaleString(),
+            note: "Wallet Withdrawal"
+        });
+
+        await updateDoc(userRef, {
+            transactions: transactions
+        });
+
+        // UPDATE UI
+        document.getElementById(
+            'sidebarBalance'
+        ).innerText =
+            '₦' +
+            currentUser.balance.toLocaleString() +
+            ' 👁️';
+
+        loadWithdrawHistory();
+
+        let fee = amount * 0.07;
+        let net = amount - fee;
+
+        // SUCCESS
+        showAlert(
+            'Withdrawal Submitted ⏳',
+            'Requested: ₦' +
+            amount.toLocaleString() +
+
+            '\nFee 7%: ₦' +
+            fee.toLocaleString() +
+
+            '\nYou will receive: ₦' +
+            net.toLocaleString() +
+
+            '\n\nStatus: Pending',
+
+            'info'
+        );
+
+        document.getElementById(
+            'withdrawAmount'
+        ).value = '';
+
+        document.getElementById(
+            'feeCalc'
+        ).style.display = 'none';
+
+        // KEEP BUTTON LOCKED AFTER SUCCESS
+        withdrawBtn.innerText =
+            "Withdrawal Submitted ✓";
+
+    } catch (error) {
+
+        console.error(error);
+
+        // UNLOCK ONLY ON FAILURE
+        isSubmittingWithdrawal = false;
+
+        withdrawBtn.disabled = false;
+        withdrawBtn.style.opacity = "1";
+        withdrawBtn.style.cursor = "pointer";
+        withdrawBtn.innerText =
+            "Request Withdrawal";
+
+        showAlert(
+            'Withdrawal Error ❌',
+            error.message ||
+            'Unable to submit withdrawal. Please try again.',
+            'error'
+        );
+    }
 }
-console.log("Reached end of script");
 
 window.submitWithdrawal = submitWithdrawal;
 window.toggleSidebar = toggleSidebar;
