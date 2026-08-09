@@ -20,6 +20,26 @@ textarea,
 select {
     font-size: 16px;
 }
+.loading-spinner {
+    width: 18px;
+    height: 18px;
+    border: 3px solid rgba(255,255,255,0.4);
+    border-top: 3px solid #fff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
     </style>
 </head>
 <body>
@@ -50,7 +70,9 @@ select {
     placeholder="Referral Code (Optional)"
 >
 
-            <button type="submit" class="btn" style="width:100%; margin-top:10px;">Sign Up</button>
+            <button id="signupBtn" type="submit" class="btn" style="width:100%; margin-top:10px;">
+    <span id="signupText">Sign Up</span>
+</button>
         </form>
 
         <p style="margin-top:20px; color:var(--text-secondary);">
@@ -136,6 +158,11 @@ function isValidNigerianNumber(phone) {
 
 document.getElementById('signupForm').addEventListener('submit', async function(e){
     e.preventDefault();
+    const signupBtn = document.getElementById("signupBtn");
+
+signupBtn.disabled = true;
+document.getElementById("signupText").innerHTML =
+    '<span class="loading-spinner"></span> Creating account...';
 
     const fullname = document.getElementById('fullname').value;
     const phone = document.getElementById('phone').value.trim();
@@ -241,9 +268,13 @@ localStorage.removeItem("referralCode");
     }
 );
 
-} catch(error){
+} catch (error) {
+  signupBtn.disabled = false;
+document.getElementById("signupText").innerHTML = "Sign Up";
 
-    if(error.code === "auth/email-already-in-use"){
+    console.log(error);
+
+    if (error.code === "auth/email-already-in-use") {
 
         showAlert(
             "Already Registered",
@@ -251,11 +282,19 @@ localStorage.removeItem("referralCode");
             "error"
         );
 
-    }else{
+    } else if (error.code === "auth/network-request-failed") {
 
         showAlert(
-            "Registration Failed",
-            error.message,
+            "Network Problem 📶",
+            "Please check your internet connection and try again.",
+            "error"
+        );
+
+    } else {
+
+        showAlert(
+            "Registration Failed ❌",
+            "Something went wrong. Please try again later.",
             "error"
         );
 

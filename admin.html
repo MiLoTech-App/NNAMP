@@ -177,7 +177,23 @@ h2{font-size:20px;}
     </div>
 
     <div id="users" class="tab-content">
-        <div class="card"><h4>All Users</h4><div class="table-wrapper"><table id="usersTable"></table></div></div>
+  <div class="card">
+
+    <h4>All Users</h4>
+
+    <input
+        type="text"
+        id="searchUser"
+        placeholder="Search by name or phone number..."
+        oninput="searchUsers()"
+        style="margin-bottom:10px;"
+    >
+
+    <div class="table-wrapper">
+        <table id="usersTable"></table>
+    </div>
+
+</div>
         <div class="card" id="manageBox" style="display:none;">
             <h4>Manage: <span id="userName"></span></h4>
             <input type="hidden" id="editPhoneHidden">
@@ -222,6 +238,12 @@ onclick="deleteUser()">
 
 <h4>Create Savings For User</h4>
 
+<input
+    type="text"
+    id="savingSearch"
+    placeholder="Search user by name or phone..."
+    oninput="filterSavingUsers()"
+>
 <select id="savingUser" style="width:100%;padding:10px;margin-bottom:10px;">
 <option value="">Select User</option>
 </select>
@@ -252,6 +274,13 @@ Create Saving
 <div class="card">
 
 <h4>Create Investment For User</h4>
+
+<input
+    type="text"
+    id="investmentSearch"
+    placeholder="Search user by name or phone..."
+    oninput="filterInvestmentUsers()"
+>
 
 <select id="investmentUser" style="width:100%;padding:10px;margin-bottom:10px;">
 <option value="">Select User</option>
@@ -383,6 +412,7 @@ import {
     arrayUnion
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 initSessionManager(auth);
+let allUsersData = [];
 // ========== CUSTOM POPUP FUNCTIONS - ADDED ==========
 function showAlert(title, message, type = "info") {
 
@@ -540,13 +570,14 @@ async function loadAllUsers() {
         const usersSnap = await getDocs(
             collection(db, "users")
         );
-
+allUsersData = [];
 
         let rows = `
         <tr>
             <th>Name</th>
             <th>Phone</th>
             <th>Balance</th>
+            <th>Referrals</th>
             <th>Savings</th>
             <th>Investments</th>
             <th>Joined</th>
@@ -584,7 +615,14 @@ investmentsSnap.forEach(docSnap => {
 
             usersSnap.forEach((docSnap)=>{
 
-                const u = docSnap.data();
+              const u = docSnap.data();
+              const fullname = (u.fullname || "").toLowerCase();
+const phone = (u.phone || "").toLowerCase();
+
+   allUsersData.push({
+    id: docSnap.id,
+    ...u
+});
 const savings = u.savings || [];
 
 let savingInfo = "-";
@@ -642,6 +680,13 @@ rows += `
 
 <td>
     <button class="btn"
+    onclick="viewReferrals('${docSnap.id}')">
+    View Referrals
+    </button>
+</td>
+
+<td>
+    <button class="btn"
     onclick="viewSavings('${docSnap.id}')">
     View Savings
     </button>
@@ -694,6 +739,102 @@ Manage
 
     }
 
+}
+
+async function searchUsers() {
+
+    const keyword = document
+        .getElementById("searchUser")
+        .value
+        .toLowerCase();
+
+    const usersSnap = await getDocs(
+        collection(db, "users")
+    );
+
+    let rows = `
+<tr>
+    <th>Name</th>
+    <th>Phone</th>
+    <th>Balance</th>
+    <th>Referrals</th>
+    <th>Savings</th>
+    <th>Investments</th>
+    <th>Joined</th>
+    <th>Action</th>
+</tr>`;
+
+    usersSnap.forEach((docSnap) => {
+
+        const user = docSnap.data();
+
+        const fullname = (user.fullname || "")
+            .toLowerCase();
+
+        const phone = (user.phone || "")
+            .toLowerCase();
+
+        if (
+            fullname.includes(keyword) ||
+            phone.includes(keyword)
+        ) {
+
+  rows += `
+<tr>
+
+    <td>${user.fullname || "No Name"}</td>
+
+    <td>${user.phone || "-"}</td>
+
+    <td>
+        ₦${Number(user.balance || 0).toLocaleString()}
+    </td>
+
+    <td>
+        <button class="btn"
+        onclick="viewReferrals('${docSnap.id}')">
+        View Referrals
+        </button>
+    </td>
+
+    <td>
+        <button class="btn"
+        onclick="viewSavings('${docSnap.id}')">
+        View Savings
+        </button>
+    </td>
+
+    <td>
+        <button class="btn"
+        onclick="viewInvestments('${docSnap.id}')">
+        View Investments
+        </button>
+    </td>
+
+    <td>
+        ${
+            user.joined
+                ? new Date(user.joined).toLocaleString()
+                : "-"
+        }
+    </td>
+
+    <td>
+        <button class="btn"
+        onclick="manageUser('${docSnap.id}')">
+        Manage
+        </button>
+    </td>
+
+</tr>
+`;
+        }
+
+    });
+
+    document.getElementById(
+        "usersTable"
+    ).innerHTML = rows;
 }
 
 async function manageUser(uid) {
@@ -1170,13 +1311,14 @@ if (userSnap.exists()) {
 }
 
 // FIXED: NO DOUBLE DEDUCTION
-async function approveWithdrawal(withdrawId){
+async function approveWithdrawal(withdrawId, btn){
 
     showConfirm(
         "Approve Withdrawal",
         "Are you sure you want to approve this withdrawal?",
         async function(){
-
+btn.disabled = true;
+btn.innerText = "Approved";
             try {
   const withdrawSnap = await getDoc(doc(db, "withdrawals", withdrawId));
 const withdrawal = withdrawSnap.data();
@@ -1236,13 +1378,14 @@ await updateDoc(userRef, {
 }
 
 // FIXED: ADD REFUND ON REJECT
-async function rejectWithdrawal(withdrawId){
+async function rejectWithdrawal(withdrawId, btn){
 
     showConfirm(
         "Reject Withdrawal",
         "Reject this withdrawal and refund the user's balance?",
         async function(){
-
+btn.disabled = true;
+btn.innerText = "Rejected";
             const withdrawRef = doc(db, "withdrawals", withdrawId);
             const withdrawSnap = await getDoc(withdrawRef);
 
@@ -1252,7 +1395,16 @@ async function rejectWithdrawal(withdrawId){
             }
 
             const w = withdrawSnap.data();
+if (w.status !== "Pending") {
 
+    showAlert(
+        "Already processed",
+        "This withdrawal has already been processed.",
+        "info"
+    );
+
+    return;
+}
             const userRef = doc(db, "users", w.userId);
             const userSnap = await getDoc(userRef);
 
@@ -1466,7 +1618,15 @@ async function loadPendingWithdrawals() {
     )
 );
 
-let rows = `<tr><th>User</th><th>Amount</th><th>Date</th><th>Bank Details</th><th>Action</th></tr>`;
+let rows = `
+<tr>
+    <th>User</th>
+    <th>Amount</th>
+    <th>Date</th>
+    <th>Bank Details</th>
+    <th>Action</th>
+</tr>
+`;
 let found = false;
 
 withdrawalsSnap.forEach((docSnap) => {
@@ -1475,15 +1635,39 @@ withdrawalsSnap.forEach((docSnap) => {
 
     found = true;
 
-    rows += `
-    <tr>
-        <td>${w.fullname}<br><small>${w.phone}</small></td>
-        <td>₦${Number(w.amount).toLocaleString()}</td>
-        <td>${w.createdAt ? w.createdAt.toDate().toLocaleString() : "-"}</td>
-        <td>${w.bank}<br>${w.accountNo}</td>
-        <td>
-            <button class="btn green" onclick="approveWithdrawal('${docSnap.id}')">Approve</button>
-            <button class="btn red" onclick="rejectWithdrawal('${docSnap.id}')">Reject</button>
+    const charge = Number(w.amount) * 0.07;
+const net = Number(w.amount) - charge;
+
+rows += `
+<tr>
+
+    <td>
+        ${w.fullname}<br>
+        <small>${w.phone}</small>
+    </td>
+
+    <td>
+        Requested: ₦${Number(w.amount).toLocaleString()}<br>
+        7% Charges: ₦${charge.toLocaleString()}<br>
+        Net: ₦${net.toLocaleString()}
+    </td>
+
+    <td>
+        ${w.createdAt ? w.createdAt.toDate().toLocaleString() : "-"}
+    </td>
+
+    <td>
+        ${w.bank}<br>
+        ${w.accountNo}<br>
+        <strong>${w.accountName || "No account name"}</strong>
+    </td>
+    <td>
+            <button class="btn green" onclick="approveWithdrawal('${docSnap.id}', this)">
+    Approve
+</button>
+            <button class="btn red" onclick="rejectWithdrawal('${docSnap.id}', this)">
+    Reject
+</button>
         </td>
     </tr>`;
 });
@@ -1874,6 +2058,50 @@ async function loadSavingUsers(){
     });
 
 }
+function filterSavingUsers() {
+
+    const keyword = document
+        .getElementById("savingSearch")
+        .value
+        .toLowerCase();
+
+    const select = document.getElementById("savingUser");
+
+    let found = false;
+
+    for (let i = 0; i < select.options.length; i++) {
+
+        const option = select.options[i];
+
+        const text = option.text.toLowerCase();
+
+        if (text.includes(keyword)) {
+
+            option.style.display = "";
+
+            if (!found && keyword !== "") {
+
+                select.selectedIndex = i;
+
+                found = true;
+            }
+
+        } else {
+
+            option.style.display = "none";
+        }
+    }
+
+    if (keyword === "") {
+
+        select.selectedIndex = 0;
+
+        for (let i = 0; i < select.options.length; i++) {
+
+            select.options[i].style.display = "";
+        }
+    }
+}
 async function loadInvestmentUsers(){
 
     const select = document.getElementById("investmentUser");
@@ -1902,6 +2130,50 @@ async function loadInvestmentUsers(){
 
     });
 
+}
+function filterInvestmentUsers() {
+
+    const keyword = document
+        .getElementById("investmentSearch")
+        .value
+        .toLowerCase();
+
+    const select = document.getElementById("investmentUser");
+
+    let found = false;
+
+    for (let i = 0; i < select.options.length; i++) {
+
+        const option = select.options[i];
+
+        const text = option.text.toLowerCase();
+
+        if (text.includes(keyword)) {
+
+            option.style.display = "";
+
+            if (!found && keyword !== "") {
+
+                select.selectedIndex = i;
+
+                found = true;
+            }
+
+        } else {
+
+            option.style.display = "none";
+        }
+    }
+
+    if (keyword === "") {
+
+        select.selectedIndex = 0;
+
+        for (let i = 0; i < select.options.length; i++) {
+
+            select.options[i].style.display = "";
+        }
+    }
 }
 async function adminCreateInvestment(){
 
@@ -2091,6 +2363,77 @@ Do you want to continue?`,
     }
 
 }
+
+async function viewReferrals(uid) {
+
+    const referralsSnap = await getDocs(
+        collection(db, "referrals")
+    );
+
+    let message = "";
+
+    let count = 0;
+
+    referralsSnap.forEach((docSnap) => {
+
+        const ref = docSnap.data();
+
+        if (ref.referrerId === uid) {
+
+            count++;
+
+            let date = "-";
+
+            if (ref.createdAt?.seconds) {
+                date = new Date(
+                    ref.createdAt.seconds * 1000
+                ).toLocaleString();
+            }
+
+            message +=
+
+`👥 REFERRAL ${count}
+
+Name: ${ref.referredName}
+
+Phone: ${ref.referredPhone}
+
+First Investment: ₦${Number(
+    ref.investmentAmount || 0
+).toLocaleString()}
+
+Bonus Earned: ₦${Number(
+    ref.bonus || 0
+).toLocaleString()}
+
+Date: ${date}
+
+════════════════════
+
+`;
+
+        }
+
+    });
+
+    if (count === 0) {
+
+        return showAlert(
+            "No Referrals",
+            "This user has no referrals.",
+            "info"
+        );
+
+    }
+
+    showAlert(
+        "User Referrals",
+        message,
+        "info"
+    );
+
+}
+
 async function viewSavings(uid) {
 
     const userSnap = await getDoc(
@@ -2233,6 +2576,7 @@ ${new Date(
     );
 
 }
+
 window.showTab = showTab;
 window.loadAllUsers = loadAllUsers;
 window.loadPendingDeposits = loadPendingDeposits;
@@ -2252,10 +2596,15 @@ window.rejectWithdrawal = rejectWithdrawal;
 window.sendNotificationToAll = sendNotificationToAll;
 window.adminCreateSaving = adminCreateSaving;
 window.loadSavingUsers = loadSavingUsers;
+window.filterSavingUsers = filterSavingUsers;
 window.loadInvestmentUsers = loadInvestmentUsers;
+window.filterInvestmentUsers = filterInvestmentUsers;
 window.adminCreateInvestment = adminCreateInvestment;
+window.viewReferrals = viewReferrals;
 window.viewSavings = viewSavings;
 window.viewInvestments = viewInvestments;
+window.searchUsers = searchUsers;
+
 </script>
 <!-- NNAMP AUTO LOGOUT POPUP -->
 

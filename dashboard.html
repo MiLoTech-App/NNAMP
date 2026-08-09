@@ -587,17 +587,22 @@ function buyPlan(name, amount, percent){
 
     // ADDED CONFIRM POPUP
     showConfirm("Confirm Investment", `Invest ${formatMoney(amount)} in ${name}?`, async function(){
-        const dailyProfit = amount * percent;
+    const dailyProfit = amount * percent;
+const totalProfit = dailyProfit * 100;
 
 await addDoc(
-    collection(db, "users", auth.currentUser.uid, "investments"),
+    collection(db, "investments"),
     {
+        userId: auth.currentUser.uid,
+        phone: currentUser.phone,
         name: name,
         amount: amount,
-        dailyProfit: dailyProfit,
         percent: percent,
-        startTime: serverTimestamp(),
+        dailyProfit: dailyProfit,
+        totalProfit: totalProfit,
+        startTime: Date.now(),
         endTime: Date.now() + (100 * 24 * 60 * 60 * 1000),
+        lastPaid: Date.now(),
         status: "Active"
     }
 );
@@ -672,6 +677,11 @@ await addDoc(referralRef, {
 document.getElementById('walletStat').innerText = formatMoney(currentUser.balance);
         addTransaction('Investment', amount, 'Approved', `Bought ${name}`);
         updateStats();
+
+        setTimeout(() => {
+    location.reload();
+}, 1500);
+
         if(!isFirstInvestment){
             showAlert("Investment Activated ✅", `${name} activated!\n${formatMoney(dailyProfit)} daily profit`, "success");
         }
