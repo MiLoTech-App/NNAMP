@@ -163,8 +163,17 @@ if(!currentUser.hasInvested && currentUser.investments && currentUser.investment
 
 // BLOCK IF NO INVESTMENT YET
 if(!currentUser.hasInvested){
-    showAlert('Bonus Locked 🔒', 'You need to unlock your bonus by making your first investment', 'error');
-    setTimeout(() => window.location.href = 'investments.html', 2000);
+    showAlert(
+        'Bonus Locked 🔒',
+        'You need to unlock your bonus by making your first investment',
+        'error'
+    );
+
+    setTimeout(() => {
+        window.location.href = 'investments.html';
+    }, 2000);
+
+    return;
 }
 
 // Update sidebar
@@ -235,6 +244,18 @@ withdrawalsSnap.forEach((docSnap) => {
     tx.push(docSnap.data());
 });
     let withdrawals = tx;
+    withdrawals.sort((a, b) => {
+
+    const dateA = a.createdAt
+        ? a.createdAt.toMillis()
+        : 0;
+
+    const dateB = b.createdAt
+        ? b.createdAt.toMillis()
+        : 0;
+
+    return dateB - dateA;
+});
     let tbody = document.getElementById('withdrawBody');
 
     if(withdrawals.length === 0){
@@ -243,7 +264,7 @@ withdrawalsSnap.forEach((docSnap) => {
     }
 
     tbody.innerHTML = '';
-    withdrawals.reverse().forEach(t => {
+    withdrawals.forEach(t => {
         let fee = t.fee || (t.amount * 0.07);
 let net = t.netAmount || (t.amount - fee);
         
@@ -294,6 +315,17 @@ async function submitWithdrawal() {
     let amount = parseFloat(
         document.getElementById('withdrawAmount').value
     );
+    
+    if (!currentUser.hasInvested) {
+    showAlert(
+        'Bonus Locked 🔒',
+        'You need to make your first investment before you can withdraw.',
+        'error'
+    );
+
+    window.location.href = 'investments.html';
+    return;
+}
 
     if (!amount || amount < 1000) {
         showAlert(

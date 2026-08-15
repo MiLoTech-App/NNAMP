@@ -568,8 +568,11 @@ async function loadAllUsers() {
     try {
 
         const usersSnap = await getDocs(
-            collection(db, "users")
-        );
+    query(
+        collection(db, "users"),
+        orderBy("joined", "desc")
+    )
+);
 allUsersData = [];
 
         let rows = `
@@ -702,8 +705,8 @@ rows += `
 <td>
     ${
         u.joined
-            ? new Date(u.joined).toLocaleString()
-            : "-"
+    ? new Date(u.joined).toLocaleString("en-GB")
+    : "-"
     }
 </td>
 

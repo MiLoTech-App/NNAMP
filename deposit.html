@@ -254,7 +254,7 @@ async function addNotification(title, msg) {
         title: title,
         msg: msg,
         read: false,
-        date: new Date().toLocaleString(),
+        date: new Date().toLocaleString("en-GB"),
         createdAt: Date.now()
     });
 }
@@ -378,7 +378,7 @@ async function submitDeposit() {
 
                 proofUrl: proofUrl,
 
-                date: new Date().toLocaleString(),
+                date: new Date().toLocaleString("en-GB"),
                 createdAt: Date.now()
             }
         );
@@ -402,7 +402,7 @@ async function submitDeposit() {
             type: "Deposit",
             amount: amount,
             status: "Pending",
-            date: new Date().toLocaleString(),
+            date: new Date().toLocaleString("en-GB"),
             note: "Wallet Deposit"
         });
 
@@ -425,6 +425,7 @@ async function submitDeposit() {
         document.getElementById('depositAmount').value = "";
         document.getElementById('proof').value = "";
         document.getElementById('proofSection').style.display = "none";
+        loadDepositHistory();
 
         // IMPORTANT:
         // DO NOT UNLOCK THE BUTTON AFTER SUCCESS.
@@ -552,7 +553,7 @@ setInterval(async function () {
     title: "Deposit Approved ✅",
     msg: `₦${deposit.amount.toLocaleString()} has been credited to your wallet.`,
     read: false,
-    date: new Date().toLocaleString(),
+    date: new Date().toLocaleString("en-GB"),
     createdAt: Date.now()
 });
 

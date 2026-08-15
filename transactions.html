@@ -113,7 +113,25 @@ function toggleSidebar(){ document.querySelector('.sidebar').classList.toggle('a
 
 
 
+function formatTransactionDate(dateValue) {
+    if (!dateValue) return "N/A";
 
+    const date = new Date(dateValue);
+
+    if (isNaN(date.getTime())) {
+        return dateValue;
+    }
+
+    return date.toLocaleString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true
+    });
+}
 
 async function loadTransactions(filter = "all") {
 
@@ -135,10 +153,15 @@ if (userSnap.exists()) {
 console.log(transactions);
 
 
-    let filteredTx = transactions;
+    let filteredTx = [...transactions].sort((a, b) => {
 
+    const dateA = new Date(a.date).getTime();
+    const dateB = new Date(b.date).getTime();
 
-    if(filter !== "all") {
+    return dateB - dateA;
+});
+
+   if(filter !== "all") {
         filteredTx = transactions.filter(tx =>
             (tx.type || "").includes(filter)
         );
@@ -185,7 +208,7 @@ console.log(transactions);
             <td class="${statusClass}">
                 ${tx.status}
             </td>
-            <td>${tx.date || "N/A"}</td>
+            <td>${formatTransactionDate(tx.date)}</td>
         </tr>
         `;
 

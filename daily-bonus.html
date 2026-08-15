@@ -258,7 +258,7 @@ async function claimBonus() {
 
         showAlert(
             "Error ❌",
-            "Please login first",
+            "You claimed the bonus already🙈",
             "error"
         );
 
@@ -289,7 +289,7 @@ async function claimBonus() {
             type: "Daily Bonus",
             amount: DAILY_BONUS,
             status: "Approved",
-            date: new Date().toLocaleString()
+            date: new Date().toLocaleString("en-GB")
         };
 
         await updateDoc(
